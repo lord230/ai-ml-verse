@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import {
     BookOpen, Code, BrainCircuit, Activity, Zap, Layers, Calculator, Maximize, Play, Settings2, ArrowRight
 } from 'lucide-react';
@@ -574,12 +575,20 @@ class TransformerBlock(nn.Module):
                             </details>
                         ))}
                     </div>
+
+                    <div className="mt-8 flex justify-center">
+                        <Link href="/architecture-playground" className="group flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.7)] transition-all transform hover:-translate-y-1">
+                            <BrainCircuit className="w-5 h-5" />
+                            Build a Transformer in the Playground
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                    </div>
                 </section>
 
                 {/* Spacer */}
                 <div className="h-16"></div>
             </main>
-        </div>
+        </div >
     );
 }
 

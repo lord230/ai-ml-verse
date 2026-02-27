@@ -406,7 +406,7 @@ export default function PremiumLandingPage() {
           </Link>
 
           {/* Transformer Card */}
-          <Link href={user ? "/architecture-playground" : "/auth/login"} className="glass-panel group relative p-8 rounded-3xl border border-slate-700/50 bg-slate-900/50 hover:bg-slate-800/80 transition-all duration-500 overflow-hidden flex flex-col justify-between h-[400px] md:-translate-y-8 cursor-pointer block">
+          <Link href={user ? "/learn/transformers" : "/auth/login"} className="glass-panel group relative p-8 rounded-3xl border border-slate-700/50 bg-slate-900/50 hover:bg-slate-800/80 transition-all duration-500 overflow-hidden flex flex-col justify-between h-[400px] md:-translate-y-8 cursor-pointer block">
             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-colors" />
             <div>
               <div className="w-14 h-14 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 group-hover:bg-purple-500/20 transition-all">
