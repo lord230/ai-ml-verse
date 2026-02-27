@@ -469,7 +469,7 @@ export default function ModelCostCalculator() {
 }
 
 // Reusable Collapsible wrapper for the left panel logic
-function CollapsibleSection({ title, icon: Icon, children, defaultOpen = true, color = "text-indigo-400" }: { title: string, icon: React.ElementType, children: React.ReactNode, defaultOpen?: boolean, color?: string }) {
+function CollapsibleSection({ title, icon: Icon, children, defaultOpen = true, color = "text-indigo-400" }: { title: string, icon: any, children: React.ReactNode, defaultOpen?: boolean, color?: string }) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
         <div className="glass-panel rounded-2xl overflow-hidden transition-all duration-300 border border-slate-700/50 shadow-sm relative">
