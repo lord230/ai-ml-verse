@@ -14,8 +14,20 @@ const PUBLIC_PATHS = [
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Always refresh the session (keeps auth cookies up-to-date).
-    const { supabaseResponse, user } = await updateSession(request);
+    let supabaseResponse = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
+    });
+    let user = null;
+
+    try {
+        const sessionData = await updateSession(request);
+        supabaseResponse = sessionData.supabaseResponse;
+        user = sessionData.user;
+    } catch (e) {
+        console.error("Middleware Supabase Error (likely missing env vars):", e);
+    }
 
     // Check if the current path is public
     const isPublic =
