@@ -182,7 +182,7 @@ function MiniAttentionDemo() {
 // --- Minimal 3D Neural Network Demo for Homepage ---
 function NeuralNetModel() {
   const group = useRef<THREE.Group>(null);
-  const layers = [3, 5, 2]; // 3 Input, 5 Hidden, 2 Output
+  const layers = [3, 5, 6, 5, 2]; // 3 Input, 5, 6, 5 Hidden, 2 Output
   const layerSpacing = 1.2;
   const nodeSpacing = 0.5;
 
@@ -214,10 +214,51 @@ function NeuralNetModel() {
     currentIdx += nodeCount;
   });
 
+  const dummy = new THREE.Object3D();
+  const maxPulses = 20;
+  const [pulses] = useState(() =>
+    Array.from({ length: maxPulses }).map(() => ({
+      edgeId: Math.floor(Math.random() * lines.length),
+      progress: Math.random(),
+      active: Math.random() > 0.5,
+      speed: 0.5 + Math.random() * 1.5
+    }))
+  );
+
+  const instancedMeshRef = useRef<THREE.InstancedMesh>(null);
+
   useFrame((state, delta) => {
-    if (group.current) {
-      group.current.rotation.y += delta * 0.5; // Slowly rotate
-      group.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.2; // Gentle bob
+    // Rotation removed for a static, clear view
+
+    if (instancedMeshRef.current && lines.length > 0) {
+      pulses.forEach((pulse, i) => {
+        if (!pulse.active) {
+          if (Math.random() < 0.05) {
+            pulse.active = true;
+            pulse.edgeId = Math.floor(Math.random() * lines.length);
+            pulse.progress = 0;
+            pulse.speed = 0.5 + Math.random() * 1.5;
+          } else {
+            dummy.position.set(100, 100, 100);
+            dummy.updateMatrix();
+            instancedMeshRef.current!.setMatrixAt(i, dummy.matrix);
+          }
+        } else {
+          pulse.progress += delta * pulse.speed;
+          if (pulse.progress >= 1) {
+            pulse.active = false;
+            dummy.position.set(100, 100, 100);
+          } else {
+            const edge = lines[pulse.edgeId];
+            dummy.position.copy(edge[0]).lerp(edge[1], pulse.progress);
+            const scale = Math.sin(pulse.progress * Math.PI) * 0.8;
+            dummy.scale.set(scale, scale, scale);
+          }
+          dummy.updateMatrix();
+          instancedMeshRef.current!.setMatrixAt(i, dummy.matrix);
+        }
+      });
+      instancedMeshRef.current.instanceMatrix.needsUpdate = true;
     }
   });
 
@@ -242,6 +283,12 @@ function NeuralNetModel() {
           opacity={0.4}
         />
       ))}
+
+      {/* Pulses Instanced Mesh */}
+      <instancedMesh ref={instancedMeshRef} args={[undefined, undefined, maxPulses]}>
+        <sphereGeometry args={[0.04, 8, 8]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
+      </instancedMesh>
     </group>
   );
 }
@@ -249,12 +296,12 @@ function NeuralNetModel() {
 function MiniNeuralNetDemo() {
   return (
     <div className="w-full h-48 bg-slate-950/80 rounded-xl border border-slate-800 relative overflow-hidden flex flex-col cursor-grab active:cursor-grabbing">
-      <Canvas camera={{ position: [0, 0, 4] }}>
+      <Canvas camera={{ position: [0, 0, 3.2] }}>
         <ambientLight intensity={0.5} />
         <NeuralNetModel />
       </Canvas>
       <div className="absolute bottom-2 left-3 font-mono text-[10px] text-slate-500">Live Demo: Deep Neural Network</div>
-      <div className="absolute top-2 right-3 font-mono text-[10px] text-sky-400">3x5x2 Architecture</div>
+      <div className="absolute top-2 right-3 font-mono text-[10px] text-sky-400">3x5x6x5x2 Architecture</div>
     </div>
   );
 }
@@ -325,7 +372,7 @@ export default function PremiumLandingPage() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }}
               className="text-lg lg:text-xl text-slate-400 leading-relaxed mb-10 max-w-xl font-light"
             >
-              Interactive explanations of Convolutional Networks, Transformers, and modern ML architecture — built for serious researchers and developers who want more than just theory.
+              Interactive explanations of Convolutional Networks, Transformers, and modern ML architecture built for serious researchers and developers who want more than just theory.
             </motion.p>
 
             <motion.div
@@ -413,7 +460,7 @@ export default function PremiumLandingPage() {
                 <Network className="w-7 h-7" />
               </div>
               <h4 className="text-2xl font-bold text-white mb-3">Transformers & Attention</h4>
-              <p className="text-slate-400 text-sm leading-relaxed mb-6">Visualize self-attention token maps bridging textual relationships. Build a multi-head attention block from scratch.</p>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6">Visualize self attention token maps bridging textual relationships. Build a multi head attention block from scratch.</p>
             </div>
             <div className="border border-slate-700/50 bg-slate-950/80 rounded-xl p-3 flex justify-between items-center text-sm font-medium text-slate-300 group-hover:border-purple-500/30 transition-colors relative z-10">
               {user ? "Explore Transformer Lab" : "Login Required"} {user ? <ArrowRight className="w-4 h-4 text-purple-400 group-hover:translate-x-1 transition-transform" /> : <Lock className="w-4 h-4 text-slate-500" />}
@@ -428,7 +475,7 @@ export default function PremiumLandingPage() {
                 <Cpu className="w-7 h-7" />
               </div>
               <h4 className="text-2xl font-bold text-white mb-3">ML Systems & Scaling</h4>
-              <p className="text-slate-400 text-sm leading-relaxed mb-6">Accurately calculate GPU VRAM constraints, multi-node training times, and quantization overheads.</p>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6">Accurately calculate GPU VRAM constraints, multi node training times, and quantization overheads.</p>
             </div>
             <div className="border border-slate-700/50 bg-slate-950/80 rounded-xl p-3 flex justify-between items-center text-sm font-medium text-slate-300 group-hover:border-rose-500/30 transition-colors relative z-10">
               {user ? "Open Cost Simulator" : "Login Required"} {user ? <ArrowRight className="w-4 h-4 text-rose-400 group-hover:translate-x-1 transition-transform" /> : <Lock className="w-4 h-4 text-slate-500" />}
