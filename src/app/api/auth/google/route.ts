@@ -23,7 +23,26 @@ export async function GET(request: Request) {
         }
 
         if (data.url) {
-            // Redirect the user to the Google OAuth consent screen
+            // Fetch the Supabase URL server-side to intercept the Google URL
+            // This prevents the browser from ever seeing *.supabase.co
+            try {
+                const res = await fetch(data.url, {
+                    redirect: 'manual',
+                    cache: 'no-store',
+                });
+
+                // Supabase returns a 303 redirect to the provider's OAuth page
+                if (res.status >= 300 && res.status < 400) {
+                    const location = res.headers.get('location');
+                    if (location) {
+                        return NextResponse.redirect(location);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching Supabase auth URL server-side:', err);
+            }
+
+            // Fallback (though the user doesn't want to see supabase.co, it's better than failing)
             return NextResponse.redirect(data.url);
         }
 
