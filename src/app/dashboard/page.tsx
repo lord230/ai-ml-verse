@@ -35,9 +35,9 @@ export default function DashboardPage() {
             const storedTimeAwayMs = sessionStorage.getItem('timeAwayMs');
 
             let displayName = user?.email?.split('@')[0] || '';
-            // First check user metadata (from signup)
-            if (user?.user_metadata?.name) {
-                displayName = user.user_metadata.name;
+            // First check Firebase displayName
+            if (user?.displayName) {
+                displayName = user.displayName;
             }
             // Then check session storage (from login)
             if (storedName) {
