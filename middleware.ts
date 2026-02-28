@@ -61,6 +61,6 @@ export const config = {
          *  - favicon.ico
          *  - api routes (our auth verify route needs to be accessible without cookie)
          */
-        '/((?!_next/static|_next/image|favicon.ico|api/).*)',
+        '/((?!_next/static|_next/image|favicon.ico|api/|sitemap.xml|robots.txt).*)',
     ],
 };
