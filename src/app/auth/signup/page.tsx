@@ -151,15 +151,10 @@ export default function SignupPage() {
                     </div>
 
                     <button
-                        onClick={async () => {
-                            const supabase = createClient();
-                            await supabase.auth.signInWithOAuth({
-                                provider: 'google',
-                                options: {
-                                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
-                                }
-                            });
+                        onClick={() => {
+                            window.location.href = '/api/auth/google';
                         }}
+                        type="button"
                         className="mt-6 w-full flex items-center justify-center gap-3 py-3 px-6 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl border border-slate-700 transition-colors"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
