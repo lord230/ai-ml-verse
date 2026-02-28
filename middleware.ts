@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 /**
  * Routes that are publicly accessible without authentication.
@@ -14,30 +14,23 @@ const PUBLIC_PATHS = [
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    let supabaseResponse = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    });
-    let user = null;
-
-    try {
-        const sessionData = await updateSession(request);
-        supabaseResponse = sessionData.supabaseResponse;
-        user = sessionData.user;
-    } catch (e) {
-        console.error("Middleware Supabase Error (likely missing env vars):", e);
+    // Catch invalid /transformer paths and redirect to prevent access
+    if (pathname.startsWith('/transformer')) {
+        const homeUrl = request.nextUrl.clone();
+        homeUrl.pathname = '/';
+        homeUrl.search = '';
+        return NextResponse.redirect(homeUrl);
     }
+
+    // Check for the Firebase session cookie set by our /api/auth/verify route
+    const sessionCookie = request.cookies.get('firebase-session')?.value;
 
     // Check if the current path is public
     const isPublic =
         PUBLIC_PATHS.includes(pathname) ||
         pathname.startsWith('/auth/');
 
-    // A real signed-in user must have gone through login/signup (has email or phone).
-    // This excludes anonymous sessions and the "publishable key" auto-session
-    // that Supabase creates for new projects.
-    const isAuthenticated = !!user && !!(user.email || user.phone);
+    const isAuthenticated = !!sessionCookie;
 
     // If not public and not authenticated → redirect to login
     if (!isPublic && !isAuthenticated) {
@@ -56,7 +49,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(dashboardUrl);
     }
 
-    return supabaseResponse;
+    return NextResponse.next();
 }
 
 export const config = {
@@ -66,7 +59,7 @@ export const config = {
          *  - _next/static (static files)
          *  - _next/image (image optimization)
          *  - favicon.ico
-         *  - api routes (if any)
+         *  - api routes (our auth verify route needs to be accessible without cookie)
          */
         '/((?!_next/static|_next/image|favicon.ico|api/).*)',
     ],

@@ -1,13 +1,26 @@
 "use client";
 
 import Link from 'next/link';
-import { Cpu, Database, Presentation, Info, LogIn, UserPlus, LogOut, LayoutDashboard, Lock } from 'lucide-react';
+import { Cpu, Database, Presentation, Info, LogIn, UserPlus, LogOut, LayoutDashboard, Lock, User as UserIcon, ChevronDown } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
     const { user, signOut } = useAuth();
     const router = useRouter();
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const handleSignOut = async () => {
         await signOut();
@@ -58,21 +71,48 @@ export default function Navbar() {
                     <div className="h-4 w-px bg-slate-700 hidden sm:block"></div>
 
                     {user ? (
-                        <div className="flex items-center flex-wrap gap-2">
-                            <Link
-                                href="/dashboard"
-                                className="flex items-center space-x-1 sm:space-x-2 px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-semibold text-white bg-indigo-600/20 border border-indigo-500/30 rounded-lg hover:bg-indigo-600/30 transition-colors"
-                            >
-                                <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                                <span className="hidden sm:inline">Dashboard</span>
-                            </Link>
+                        <div className="relative" ref={dropdownRef}>
                             <button
-                                onClick={handleSignOut}
-                                className="flex items-center space-x-1 sm:space-x-2 px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-semibold text-slate-300 bg-slate-800/50 border border-slate-700 rounded-lg hover:text-white hover:bg-slate-700 transition-colors"
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="flex items-center space-x-2 p-1 pl-2 pr-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 rounded-full transition-colors"
                             >
-                                <LogOut className="w-4 h-4" />
-                                <span className="hidden sm:inline">Sign Out</span>
+                                {user.photoURL ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-slate-600 object-cover" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/50 flex items-center justify-center">
+                                        <UserIcon className="w-4 h-4 text-indigo-400" />
+                                    </div>
+                                )}
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                             </button>
+
+                            {isProfileOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top-right transition-all">
+                                    <div className="px-4 py-2 border-b border-slate-700/50 mb-2">
+                                        <p className="text-sm font-medium text-white truncate">{user.displayName || 'User'}</p>
+                                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                                    </div>
+                                    <Link
+                                        href="/dashboard"
+                                        onClick={() => setIsProfileOpen(false)}
+                                        className="flex items-center space-x-2 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
+                                    >
+                                        <LayoutDashboard className="w-4 h-4 text-indigo-400" />
+                                        <span>Dashboard</span>
+                                    </Link>
+                                    <button
+                                        onClick={() => {
+                                            setIsProfileOpen(false);
+                                            handleSignOut();
+                                        }}
+                                        className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors text-left"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        <span>Sign Out</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="flex items-center space-x-3">
