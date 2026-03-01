@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Presentation, TrendingDown, Scissors, Activity, Network } from 'lucide-react';
+import { Presentation, TrendingDown, Scissors, Activity, Network, BoxSelect } from 'lucide-react';
 
 export default function VisualsHub() {
     const visuals = [
@@ -34,6 +34,14 @@ export default function VisualsHub() {
             icon: Network,
             color: 'text-violet-400',
             bg: 'bg-violet-500/20'
+        },
+        {
+            title: '3D Normalization',
+            desc: 'Geometric intuition for Batch, Layer, Instance, and Group Normalization using interactive 3D tensors.',
+            href: '/learn/normalization',
+            icon: BoxSelect,
+            color: 'text-cyan-400',
+            bg: 'bg-cyan-500/20'
         }
     ];
 
