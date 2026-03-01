@@ -515,11 +515,14 @@ export default function PremiumLandingPage() {
       <div className="relative z-10 py-32 px-6 max-w-5xl mx-auto">
         <h3 className="text-3xl font-black text-center text-white mb-16">The Journey</h3>
 
-        <div className="relative border-l-2 border-slate-800 ml-4 md:ml-0 md:border-l-0">
+        <div className="relative">
+          {/* Vertical line for mobile */}
+          <div className="block md:hidden absolute top-0 bottom-0 left-[27px] w-[2px] bg-slate-800 -z-10" />
+
           {/* Horizontal line for desktop */}
           <div className="hidden md:block absolute top-[28px] left-0 w-full h-[2px] bg-slate-800 -z-10" />
 
-          <div className="flex flex-col md:flex-row justify-between gap-8 md:gap-4 relative pl-8 md:pl-0">
+          <div className="flex flex-col md:flex-row justify-between gap-12 md:gap-4 relative">
             {[
               { title: "Foundations", desc: "Calculus & Linear Algebra" },
               { title: "Convolutions", desc: "Vision & Filters" },
@@ -527,13 +530,15 @@ export default function PremiumLandingPage() {
               { title: "Attention", desc: "Transformers & LLMs" },
               { title: "Scale", desc: "Systems & deployment" }
             ].map((step, i) => (
-              <div key={i} className="flex flex-col items-start md:items-center relative group">
+              <div key={i} className="flex flex-row md:flex-col items-center md:items-center relative group gap-6 md:gap-0">
                 {/* Dot */}
-                <div className="absolute -left-[41px] md:relative md:left-auto md:mb-6 w-14 h-14 bg-slate-900 border-2 border-slate-700 rounded-full flex items-center justify-center shadow-lg group-hover:border-indigo-500 group-hover:scale-110 group-hover:bg-indigo-950 transition-all font-mono text-sm text-slate-500 group-hover:text-indigo-400">
+                <div className="shrink-0 w-14 h-14 bg-slate-900 border-2 border-slate-700 rounded-full flex items-center justify-center shadow-lg group-hover:border-indigo-500 group-hover:scale-110 group-hover:bg-indigo-950 transition-all font-mono text-sm text-slate-500 group-hover:text-indigo-400 md:mb-6">
                   0{i + 1}
                 </div>
-                <h5 className="font-bold text-white mb-1 group-hover:text-white transition-colors text-lg md:text-base">{step.title}</h5>
-                <div className="text-xs text-slate-400 md:text-center max-w-[120px] leading-relaxed">{step.desc}</div>
+                <div className="flex flex-col items-start md:items-center">
+                  <h5 className="font-bold text-white mb-1 group-hover:text-white transition-colors text-lg md:text-base">{step.title}</h5>
+                  <div className="text-xs text-slate-400 md:text-center max-w-[150px] leading-relaxed">{step.desc}</div>
+                </div>
               </div>
             ))}
           </div>
