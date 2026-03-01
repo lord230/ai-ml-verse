@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Presentation, TrendingDown, Scissors, Activity } from 'lucide-react';
+import { Presentation, TrendingDown, Scissors, Activity, Network } from 'lucide-react';
 
 export default function VisualsHub() {
     const visuals = [
@@ -26,6 +26,14 @@ export default function VisualsHub() {
             icon: Activity,
             color: 'text-indigo-400',
             bg: 'bg-indigo-500/20'
+        },
+        {
+            title: 'Backpropagation Flow',
+            desc: 'Interactive step-by-step math and intuition behind how neural networks learn from their mistakes.',
+            href: '/visuals/backprop',
+            icon: Network,
+            color: 'text-violet-400',
+            bg: 'bg-violet-500/20'
         }
     ];
 
