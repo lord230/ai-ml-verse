@@ -11,8 +11,22 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "AI ML Verse",
-  description: "Simulate. Optimize. Understand ML Systems. A production-grade ML systems simulation platform.",
+  description: "See how neural networks actually learn. Interactive visualizations of backpropagation, transformers, normalization, CNNs, and deep learning architectures — built for serious AI minds.",
+  openGraph: {
+    title: "AI ML Verse",
+    description: "See how neural networks actually learn. Interactive visualizations of backpropagation, transformers, normalization, CNNs, and deep learning architectures — built for serious AI minds.",
+    type: "website",
+    url: "https://ai-ml-verse.com",
+    siteName: "AI ML Verse",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI ML Verse",
+    description: "See how neural networks actually learn. Interactive visualizations of backpropagation, transformers, normalization, CNNs, and deep learning architectures — built for serious AI minds.",
+    creator: "@aimlverse",
+  },
 };
+
 
 export default function RootLayout({
   children,
