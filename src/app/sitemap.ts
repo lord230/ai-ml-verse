@@ -10,12 +10,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
         '/architecture-playground',
         '/learn/transformers',
         '/learn/cnn-roadmap',
+        '/learn/normalization',
         '/tools/dataset-explorer',
         '/tools/model-cost-calculator',
         '/visuals',
         '/visuals/decision-boundary',
         '/visuals/gradient-descent',
-        '/visuals/overfitting-demo'
+        '/visuals/overfitting-demo',
+        '/visuals/backprop'
     ];
 
     // Build the sitemap array
