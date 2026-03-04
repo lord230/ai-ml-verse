@@ -11,7 +11,7 @@ export async function GET() {
     const xmlEntries = routes
         .map((route) => {
             const url = `${baseUrl}${route.url}`;
-            const lastMod = route.lastModified?.toISOString().split('T')[0] ?? new Date().toISOString().split('T')[0];
+            const lastMod = route.lastModified?.toString().split('T')[0] ?? new Date().toISOString().split('T')[0];
             const changeFreq = route.changeFrequency ?? 'weekly';
             const priority = route.priority?.toString() ?? '0.7';
             return `  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>${changeFreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
