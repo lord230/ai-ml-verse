@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: '/',
             disallow: ['/api/'], // Disallow crawling API routes
         },
-        sitemap: [`${baseUrl}/sitemap.xml`, `${baseUrl}/visuals/sitemap.xml`],
+        sitemap: [`${baseUrl}/sitemap.xml`, `${baseUrl}/visuals-sitemap.xml`],
     };
 }
