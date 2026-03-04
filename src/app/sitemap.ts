@@ -17,7 +17,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
         '/visuals/decision-boundary',
         '/visuals/gradient-descent',
         '/visuals/overfitting-demo',
-        '/visuals/backprop'
+        '/visuals/backprop',
+        '/visuals/normalization'
     ];
 
     // Build the sitemap array

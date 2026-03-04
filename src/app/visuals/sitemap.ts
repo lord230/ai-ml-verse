@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         '/visuals/gradient-descent',
         '/visuals/overfitting-demo',
         '/visuals/backprop',
+        '/visuals/normalization',
     ];
     return routes.map((route) => ({
         url: `${baseUrl}${route}`,
