@@ -3,6 +3,8 @@
 import React from 'react';
 import { BookOpen, Activity } from 'lucide-react';
 import { ModelType } from './Models';
+import 'katex/dist/katex.min.css';
+import { BlockMath } from 'react-katex';
 
 interface StatsAndMathProps {
     modelType: ModelType;
@@ -46,9 +48,9 @@ export function StatsAndMath({ modelType, loss, epoch }: StatsAndMathProps) {
                             <p className="mb-3">
                                 Models the probability of a point belonging to class 1 using a linear combination of features passed through a Sigmoid activation function.
                             </p>
-                            <div className="font-mono text-xs bg-slate-950 p-3 rounded-lg text-sky-300 overflow-x-auto whitespace-nowrap border border-slate-800 shadow-inner">
-                                z = w₁x₁ + w₂x₂ + b<br />
-                                P(y=1|x) = 1 / (1 + e⁻ᶻ)
+                            <div className="bg-slate-950 p-2 rounded-lg text-sky-300 overflow-x-auto border border-slate-800 shadow-inner">
+                                <BlockMath math="z = w_1x_1 + w_2x_2 + b" />
+                                <BlockMath math="P(y=1|x) = \frac{1}{1 + e^{-z}}" />
                             </div>
                             <p className="mt-3 text-xs text-slate-400">
                                 This algorithm mathematically can only draw a straight straight line through the 2D plane. It fails on non-linear datasets (like Moons or Circles).
@@ -62,9 +64,9 @@ export function StatsAndMath({ modelType, loss, epoch }: StatsAndMathProps) {
                             <p className="mb-3">
                                 Support Vector Machines seek the "maximum margin" hyperplane that separates the classes. This demo uses Hinge Loss.
                             </p>
-                            <div className="font-mono text-xs bg-slate-950 p-3 rounded-lg text-sky-300 overflow-x-auto whitespace-nowrap border border-slate-800 shadow-inner">
-                                Loss = max(0, 1 - yᵢ(w·xᵢ + b))<br />
-                                <span className="text-slate-500">// yᵢ ∈ &#123;-1, 1&#125;</span>
+                            <div className="bg-slate-950 p-2 rounded-lg text-sky-300 overflow-x-auto border border-slate-800 shadow-inner relative">
+                                <BlockMath math="\text{Loss} = \max(0, 1 - y_i(w \cdot x_i + b))" />
+                                <div className="absolute top-2 right-2 text-[10px] text-slate-500 font-mono">{`// y_i \\in \\{-1, 1\\}`}</div>
                             </div>
                         </div>
                     )}
@@ -75,9 +77,9 @@ export function StatsAndMath({ modelType, loss, epoch }: StatsAndMathProps) {
                             <p className="mb-3">
                                 A non-parametric method. KNN doesn't learn mathematical weights. It remembers all points and votes based on Euclidean distance.
                             </p>
-                            <div className="font-mono text-xs bg-slate-950 p-3 rounded-lg text-sky-300 overflow-x-auto whitespace-nowrap border border-slate-800 shadow-inner">
-                                d = √((x₂ - x₁)² + (y₂ - y₁)²)<br />
-                                ŷ = mode(k closest neighbors)
+                            <div className="bg-slate-950 p-2 rounded-lg text-sky-300 overflow-x-auto border border-slate-800 shadow-inner">
+                                <BlockMath math="d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}" />
+                                <BlockMath math="\hat{y} = \text{mode}(k \text{ closest neighbors})" />
                             </div>
                             <p className="mt-3 text-xs text-slate-400">
                                 This creates highly complex, perfectly-fitted (sometimes overfitted) boundaries without optimization.
@@ -91,9 +93,9 @@ export function StatsAndMath({ modelType, loss, epoch }: StatsAndMathProps) {
                             <p className="mb-3">
                                 A 2-Layer Neural Network (8 hidden neurons) acting as a universal function approximator, capable of drawing highly non-linear, curved boundaries.
                             </p>
-                            <div className="font-mono text-xs bg-slate-950 p-3 rounded-lg text-sky-300 overflow-x-auto whitespace-nowrap border border-slate-800 shadow-inner">
-                                Hidden = ReLU(W₁·X + b₁)<br />
-                                Output = Sigmoid(W₂·Hidden + b₂)
+                            <div className="bg-slate-950 p-2 rounded-lg text-sky-300 overflow-x-auto border border-slate-800 shadow-inner">
+                                <BlockMath math="\text{Hidden} = \text{ReLU}(W_1X + b_1)" />
+                                <BlockMath math="\text{Output} = \text{Sigmoid}(W_2\text{Hidden} + b_2)" />
                             </div>
                             <p className="mt-3 text-xs text-slate-400">
                                 Watch how the boundary warps and bends over epochs to encapsulate the yellow class inside the circles dataset!

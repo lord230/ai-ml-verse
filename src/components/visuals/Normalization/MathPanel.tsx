@@ -7,13 +7,8 @@ interface Props {
     isNormalized: boolean;
 }
 
-// Math formatting helper
-const Frac = ({ n, d }: { n: React.ReactNode, d: React.ReactNode }) => (
-    <span className="inline-flex flex-col items-center justify-center align-middle mx-1 text-[0.95em]">
-        <span className="border-b border-indigo-400/60 pb-[2px] mb-[2px] leading-none px-1">{n}</span>
-        <span className="leading-none pt-[1px] px-1">{d}</span>
-    </span>
-);
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 
 export default function MathPanel({ normType, stats, isNormalized }: Props) {
 
@@ -36,31 +31,23 @@ export default function MathPanel({ normType, stats, isNormalized }: Props) {
                 </div>
 
                 {/* 2. Mean & Variance Equations */}
-                <div className="flex flex-col gap-2 pt-2">
-                    <div className="flex items-center text-slate-300">
-                        <span className="text-amber-400 font-bold mr-2 text-lg">μ</span> =
-                        <Frac n="1" d="m" />
-                        <span className="text-lg">∑</span> x<sub className="text-[10px] ml-[1px]">i</sub>
-                        <span className="ml-4 text-emerald-400 opacity-80">(≈ {displayMean.toFixed(3)})</span>
+                <div className="flex flex-col gap-2 pt-2 text-slate-300 overflow-x-auto">
+                    <div className="flex items-center gap-4">
+                        <InlineMath math="\mu = \frac{1}{m} \sum_{i=1}^m x_i" />
+                        <span className="text-emerald-400 opacity-80">(≈ {displayMean.toFixed(3)})</span>
                     </div>
 
-                    <div className="flex items-center text-slate-300">
-                        <span className="text-rose-400 font-bold mr-2 text-lg">σ²</span> =
-                        <Frac n="1" d="m" />
-                        <span className="text-lg">∑</span> (x<sub className="text-[10px] ml-[1px]">i</sub> - μ)²
-                        <span className="ml-4 text-emerald-400 opacity-80">(≈ {displayVar.toFixed(3)})</span>
+                    <div className="flex items-center gap-4">
+                        <InlineMath math="\sigma^2 = \frac{1}{m} \sum_{i=1}^m (x_i - \mu)^2" />
+                        <span className="text-emerald-400 opacity-80">(≈ {displayVar.toFixed(3)})</span>
                     </div>
                 </div>
 
                 {/* 3. Final Step Output */}
-                <div className={`pt-4 border-t border-slate-700/50 transition-all duration-500 ${isNormalized ? 'text-white' : 'text-slate-500'}`}>
-                    <div className="flex items-center">
-                        <span className="font-bold mr-2">x̂<sub className="text-[10px] ml-[1px]">i</sub></span> =
-                        <Frac n="x - μ" d={<span>√(σ² + ε)</span>} />
-                    </div>
-                    <div className="flex items-center mt-2">
-                        <span className="font-bold mr-2 text-cyan-400">y<sub className="text-[10px] ml-[1px]">i</sub></span> =
-                        <span className="text-fuchsia-400">γ</span>x̂<sub className="text-[10px] ml-[1px]">i</sub> + <span className="text-amber-400">β</span>
+                <div className={`pt-4 border-t border-slate-700/50 transition-all duration-500 overflow-x-auto ${isNormalized ? 'text-white' : 'text-slate-500'}`}>
+                    <div className="flex flex-col gap-3">
+                        <BlockMath math="\hat{x}_i = \frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}}" />
+                        <BlockMath math="y_i = \gamma \hat{x}_i + \beta" />
                     </div>
                 </div>
 

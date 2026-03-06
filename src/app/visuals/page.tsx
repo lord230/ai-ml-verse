@@ -42,6 +42,14 @@ export default function VisualsHub() {
             icon: BoxSelect,
             color: 'text-cyan-400',
             bg: 'bg-cyan-500/20'
+        },
+        {
+            title: 'Activation Functions',
+            desc: 'Interactive laboratory to explore how neural networks transform data visually and mathematically.',
+            href: '/visuals/activations',
+            icon: Activity,
+            color: 'text-purple-400',
+            bg: 'bg-purple-500/20'
         }
     ];
 

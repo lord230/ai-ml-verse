@@ -10,13 +10,8 @@ interface Props {
     inputs: number[];
 }
 
-// Mathematical Fraction Component for accurate Calculus rendering
-const Frac = ({ n, d }: { n: React.ReactNode, d: React.ReactNode }) => (
-    <span className="inline-flex flex-col items-center justify-center align-middle mx-1 text-[0.95em]">
-        <span className="border-b border-slate-400/60 pb-[2px] mb-[2px] leading-none px-1">{n}</span>
-        <span className="leading-none pt-[1px] px-1">{d}</span>
-    </span>
-);
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 
 export default function StepExplorer({ mode, currentStep, math, learningRate, inputs }: Props) {
     const isAdvanced = mode === 'advanced';
@@ -94,10 +89,10 @@ export default function StepExplorer({ mode, currentStep, math, learningRate, in
                 {renderMathStep(
                     "Neuron h₁",
                     <>
-                        <span>z₁ = (x₁·w₁₁) + (x₂·w₂₁) + (x₃·w₃₁)</span>
-                        <span>h₁ = σ(z₁)</span>
+                        <BlockMath math="z_1 = (x_1 \cdot w_{11}) + (x_2 \cdot w_{21}) + (x_3 \cdot w_{31})" />
+                        <BlockMath math="h_1 = \sigma(z_1)" />
                     </>,
-                    <span>z₁ = ({inputs[0].toFixed(2)} × {math.weights['i1-h1'].toFixed(2)}) + ({inputs[1].toFixed(2)} × {math.weights['i2-h1'].toFixed(2)}) + ({inputs[2].toFixed(2)} × {math.weights['i3-h1'].toFixed(2)})</span>,
+                    <BlockMath math={`z_1 = (${inputs[0].toFixed(2)} \\cdot ${math.weights['i1-h1'].toFixed(2)}) + (${inputs[1].toFixed(2)} \\cdot ${math.weights['i2-h1'].toFixed(2)}) + (${inputs[2].toFixed(2)} \\cdot ${math.weights['i3-h1'].toFixed(2)})`} />,
                     [
                         <span key="1">z₁ = {(inputs[0] * math.weights['i1-h1']).toFixed(3)} + {(inputs[1] * math.weights['i2-h1']).toFixed(3)} + {(inputs[2] * math.weights['i3-h1']).toFixed(3)}</span>,
                         <span key="2">z₁ = {math.h1_z.toFixed(4)}</span>
@@ -109,10 +104,10 @@ export default function StepExplorer({ mode, currentStep, math, learningRate, in
                 {renderMathStep(
                     "Neuron h₂",
                     <>
-                        <span>z₂ = (x₁·w₁₂) + (x₂·w₂₂) + (x₃·w₃₂)</span>
-                        <span>h₂ = σ(z₂)</span>
+                        <BlockMath math="z_2 = (x_1 \cdot w_{12}) + (x_2 \cdot w_{22}) + (x_3 \cdot w_{32})" />
+                        <BlockMath math="h_2 = \sigma(z_2)" />
                     </>,
-                    <span>z₂ = ({inputs[0].toFixed(2)} × {math.weights['i1-h2'].toFixed(2)}) + ({inputs[1].toFixed(2)} × {math.weights['i2-h2'].toFixed(2)}) + ({inputs[2].toFixed(2)} × {math.weights['i3-h2'].toFixed(2)})</span>,
+                    <BlockMath math={`z_2 = (${inputs[0].toFixed(2)} \\cdot ${math.weights['i1-h2'].toFixed(2)}) + (${inputs[1].toFixed(2)} \\cdot ${math.weights['i2-h2'].toFixed(2)}) + (${inputs[2].toFixed(2)} \\cdot ${math.weights['i3-h2'].toFixed(2)})`} />,
                     [
                         <span key="1">z₂ = {(inputs[0] * math.weights['i1-h2']).toFixed(3)} + {(inputs[1] * math.weights['i2-h2']).toFixed(3)} + {(inputs[2] * math.weights['i3-h2']).toFixed(3)}</span>,
                         <span key="2">z₂ = {math.h2_z.toFixed(4)}</span>
@@ -132,10 +127,10 @@ export default function StepExplorer({ mode, currentStep, math, learningRate, in
                 {renderMathStep(
                     "Neuron Output",
                     <>
-                        <span>z_out = (h₁·w_h₁) + (h₂·w_h₂)</span>
-                        <span>ŷ = z_out (Linear)</span>
+                        <BlockMath math="z_{\text{out}} = (h_1 \cdot w_{h_1}) + (h_2 \cdot w_{h_2})" />
+                        <BlockMath math="\hat{y} = z_{\text{out}} \ (\text{Linear})" />
                     </>,
-                    <span>z_out = ({math.h1_a.toFixed(4)} × {math.weights['h1-o1'].toFixed(2)}) + ({math.h2_a.toFixed(4)} × {math.weights['h2-o1'].toFixed(2)})</span>,
+                    <BlockMath math={`z_{\text{out}} = (${math.h1_a.toFixed(4)} \\cdot ${math.weights['h1-o1'].toFixed(2)}) + (${math.h2_a.toFixed(4)} \\cdot ${math.weights['h2-o1'].toFixed(2)})`} />,
                     [
                         <span key="1">z_out = {(math.h1_a * math.weights['h1-o1']).toFixed(4)} + {(math.h2_a * math.weights['h2-o1']).toFixed(4)}</span>,
                         <span key="2">z_out = {math.o1_z.toFixed(4)}</span>
@@ -157,12 +152,12 @@ export default function StepExplorer({ mode, currentStep, math, learningRate, in
                 {renderMathStep(
                     "Mean Squared Error",
                     <>
-                        <span>Error = ŷ - Target</span>
-                        <span>Loss = Error²</span>
+                        <BlockMath math="\text{Error} = \hat{y} - \text{Target}" />
+                        <BlockMath math="L = \text{Error}^2" />
                     </>,
                     <>
-                        <span>Error = (ŷ) - (Target)</span>
-                        <span>Error = ({math.o1_a.toFixed(4)}) - ({(math.o1_a - math.error).toFixed(2)})</span>
+                        <BlockMath math="\text{Error} = (\hat{y}) - (\text{Target})" />
+                        <BlockMath math={`\\text{Error} = (${math.o1_a.toFixed(4)}) - (${(math.o1_a - math.error).toFixed(2)})`} />
                     </>,
                     [
                         <span key="1">Error = {math.error > 0 ? '+' : ''}{(-math.error).toFixed(4)}</span>
@@ -184,15 +179,15 @@ export default function StepExplorer({ mode, currentStep, math, learningRate, in
                 {renderMathStep(
                     "Gradient for w(h₁ → Out)",
                     <>
-                        <span className="flex items-center"><Frac n="∂L" d="∂w" /> = <Frac n="∂L" d="∂ŷ" /> × <Frac n="∂ŷ" d="∂z" /> × <Frac n="∂z" d="∂w" /></span>
-                        <span className="flex items-center"><Frac n="∂L" d="∂ŷ" /> = 2(ŷ - Target)</span>
+                        <BlockMath math="\frac{\partial L}{\partial w} = \frac{\partial L}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial z} \cdot \frac{\partial z}{\partial w}" />
+                        <BlockMath math="\frac{\partial L}{\partial \hat{y}} = 2(\hat{y} - \text{Target})" />
                     </>,
                     <>
-                        <span className="flex items-center"><Frac n="∂L" d="∂ŷ" /> = 2 * ({-math.error.toFixed(4)}) = {math.dL_dOut.toFixed(4)}</span>
-                        <span className="flex items-center"><Frac n="∂L" d="∂w_h1_o" /> = {math.dL_dOut.toFixed(4)} × 1 × {math.h1_a.toFixed(4)}</span>
+                        <BlockMath math={`\\frac{\\partial L}{\\partial \hat{y}} = 2 \\cdot (${(-math.error).toFixed(4)}) = ${math.dL_dOut.toFixed(4)}`} />
+                        <BlockMath math={`\\frac{\\partial L}{\\partial w_{h_1 \to o}} = ${math.dL_dOut.toFixed(4)} \\cdot 1 \\cdot ${math.h1_a.toFixed(4)}`} />
                     </>,
                     [
-                        <span key="1" className="flex items-center"><Frac n="∂L" d="∂w_h1_o" /> = {math.dL_dOut.toFixed(4)} × {math.h1_a.toFixed(4)}</span>
+                        <BlockMath key="1" math={`\\frac{\\partial L}{\\partial w_{h_1 \\to o}} = ${math.dL_dOut.toFixed(4)} \\cdot ${math.h1_a.toFixed(4)}`} />
                     ],
                     <span>∂ = {math.grad_h1_o1.toFixed(6)}</span>,
                     currentStep === 4
@@ -218,17 +213,16 @@ export default function StepExplorer({ mode, currentStep, math, learningRate, in
                 {renderMathStep(
                     "Gradient for w(x₁ → h₁)",
                     <>
-                        <span className="flex items-center"><Frac n="∂L" d="∂w" /> = (<Frac n="∂L" d="∂z_out" /> × w_h1_o) × σ'(z₁) × x₁</span>
-                        <span>σ'(z) = a(1-a)</span>
+                        <BlockMath math="\frac{\partial L}{\partial w} = \left(\frac{\partial L}{\partial z_{\text{out}}} \cdot w_{h_1 \to o}\right) \cdot \sigma'(z_1) \cdot x_1" />
+                        <BlockMath math="\sigma'(z) = a(1-a)" />
                     </>,
                     <>
-                        <span>σ'(z₁) = {math.h1_a.toFixed(4)} × (1 - {math.h1_a.toFixed(4)}) = {math.sig_deriv_h1.toFixed(4)}</span>
-                        <span className="flex items-center"><Frac n="∂L" d="∂z₁" /> = {math.dL_dz_out.toFixed(4)} × {math.weights['h1-o1'].toFixed(2)} × {math.sig_deriv_h1.toFixed(4)} = {math.dL_dz_h1.toFixed(4)}</span>
-                        <br />
-                        <span className="flex items-center"><Frac n="∂L" d="∂w_i1_h1" /> = {math.dL_dz_h1.toFixed(4)} × {inputs[0].toFixed(2)}</span>
+                        <BlockMath math={`\\sigma'(z_1) = ${math.h1_a.toFixed(4)} \\cdot (1 - ${math.h1_a.toFixed(4)}) = ${math.sig_deriv_h1.toFixed(4)}`} />
+                        <BlockMath math={`\\frac{\\partial L}{\\partial z_1} = ${math.dL_dz_out.toFixed(4)} \\cdot ${math.weights['h1-o1'].toFixed(2)} \\cdot ${math.sig_deriv_h1.toFixed(4)} = ${math.dL_dz_h1.toFixed(4)}`} />
+                        <BlockMath math={`\\frac{\\partial L}{\\partial w_{x_1 \\to h_1}} = ${math.dL_dz_h1.toFixed(4)} \\cdot ${inputs[0].toFixed(2)}`} />
                     </>,
                     [
-                        <span key="1" className="flex items-center"><Frac n="∂L" d="∂w_i1_h1" /> = {math.dL_dz_h1.toFixed(4)} × {inputs[0].toFixed(2)}</span>
+                        <BlockMath key="1" math={`\\frac{\\partial L}{\\partial w_{x_1 \\to h_1}} = ${math.dL_dz_h1.toFixed(4)} \\cdot ${inputs[0].toFixed(2)}`} />
                     ],
                     <span>∂ = {math.grad_i1_h1.toFixed(6)}</span>,
                     currentStep === 5
@@ -246,8 +240,8 @@ export default function StepExplorer({ mode, currentStep, math, learningRate, in
 
                 {renderMathStep(
                     "Update w(h₁ → Out)",
-                    <span className="flex items-center">w_new = w_old - (<span className="text-violet-300 px-1">η</span> × <Frac n="∂L" d="∂w" />)</span>,
-                    <span>w_new = {math.weights['h1-o1'].toFixed(4)} - ({learningRate} × {math.grad_h1_o1.toFixed(4)})</span>,
+                    <BlockMath math="w_{\text{new}} = w_{\text{old}} - \left(\eta \cdot \frac{\partial L}{\partial w}\right)" />,
+                    <BlockMath math={`w_{\text{new}} = ${math.weights['h1-o1'].toFixed(4)} - (${learningRate} \\cdot ${math.grad_h1_o1.toFixed(4)})`} />,
                     [
                         <span key="1">w_new = {math.weights['h1-o1'].toFixed(4)} - {(learningRate * math.grad_h1_o1).toFixed(6)}</span>
                     ],
