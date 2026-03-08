@@ -18,7 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
         '/visuals/gradient-descent',
         '/visuals/overfitting-demo',
         '/visuals/backprop',
-        '/visuals/normalization'
+        '/visuals/normalization',
+        '/visuals/activations'
     ];
 
     // Build the sitemap array

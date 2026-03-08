@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         '/visuals/overfitting-demo',
         '/visuals/backprop',
         '/visuals/normalization',
+        '/visuals/activations',
     ];
     return routes.map((route) => ({
         url: `${baseUrl}${route}`,
