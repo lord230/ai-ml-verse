@@ -8,7 +8,7 @@ import { Points, PointMaterial, Line } from "@react-three/drei";
 import * as THREE from 'three';
 import {
   ArrowRight, Cpu, Presentation, Lock,
-  Network, Zap, Target, BookOpen, Fingerprint, Layers, GraduationCap
+  Network, Zap, Target, BookOpen, Fingerprint, Layers, GraduationCap, Mail
 } from "lucide-react";
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -566,10 +566,15 @@ export default function PremiumLandingPage() {
             <GraduationCap className="w-5 h-5 text-slate-400 mr-2" />
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Developer Note</span>
           </div>
-          <p className="text-sm text-slate-500 leading-relaxed font-mono">
+          <p className="text-sm text-slate-500 leading-relaxed font-mono mb-4 text-center">
             Hi, I am a B.Tech final year student. I built this platform to keep track of my progress and visually log the concepts I&apos;ve learned during these 4 years.
             If you find any inaccuracies in the mathematics or implementations I&apos;ve posted, please do notify me! This is a constant work in progress.
           </p>
+          <div className="flex justify-center mt-6">
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=1amit1verma@gmail.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 rounded-lg hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:text-indigo-300 transition-all font-mono text-sm font-semibold group">
+              <Mail className="w-4 h-4 group-hover:scale-110 transition-transform" /> Contact Me
+            </a>
+          </div>
         </div>
       </div>
 
