@@ -2,7 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
     // Rely on environment variable or fallback to a placeholder domain
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.aimlverse.in/';
+    const rawBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.aimlverse.in';
+    // Remove any trailing slash from the base URL if it's unintentionally set in the .env file
+    const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
     // Core public and feature routes
     const routes = [

@@ -12,11 +12,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "AI ML Verse",
   description: "See how neural networks actually learn. Interactive visualizations of backpropagation, transformers, normalization, CNNs, and deep learning architectures — built for serious AI minds.",
+  metadataBase: new URL("https://www.aimlverse.in"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "AI ML Verse",
     description: "See how neural networks actually learn. Interactive visualizations of backpropagation, transformers, normalization, CNNs, and deep learning architectures — built for serious AI minds.",
     type: "website",
-    url: "https://ai-ml-verse.com",
+    url: "https://www.aimlverse.in",
     siteName: "AI ML Verse",
   },
   twitter: {
