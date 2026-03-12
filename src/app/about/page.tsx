@@ -134,6 +134,79 @@ export default function AboutPage() {
               and carefully engineered intelligence</span>.
             </p>
           </motion.blockquote>
+
+          {/* ── Developer Note ── */}
+          <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible"
+            className="rounded-xl border border-indigo-500/20 overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(17,24,39,0.9) 100%)',
+              boxShadow: '0 0 32px rgba(109,40,217,0.12)',
+            }}
+          >
+            {/* Terminal header bar */}
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-700/60"
+              style={{ background: 'rgba(30,41,59,0.6)' }}>
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
+              <span className="ml-3 text-xs text-slate-500 font-mono">developer_note.md</span>
+            </div>
+            {/* Note content */}
+            <div className="px-5 py-5 flex flex-col gap-3">
+              <p className="text-xs font-mono text-cyan-400/70 uppercase tracking-widest">// Developer Note</p>
+              <p className="text-slate-300 text-[14px] leading-relaxed">
+                If you&apos;re reading this, you&apos;re probably someone who cares about how things
+                actually work{' '}<span className="text-indigo-400">..... not just how to use them.</span>
+              </p>
+              <p className="text-slate-300 text-[14px] leading-relaxed font-medium">
+                That&apos;s exactly who AIMLVerse is built for.
+              </p>
+              <p className="text-slate-300 text-[14px] leading-relaxed">
+                Every page, visual, and experiment here is built from scratch. No shortcuts.
+                No recycled tutorials. Just genuine exploration of ideas, mathematics,
+                and the systems that make{' '}
+                <span className="text-indigo-400 font-medium">intelligence possible</span>.
+              </p>
+              <p className="text-slate-400 text-[13px] font-mono mt-2">
+                — Amit<br/>
+                <span className="text-cyan-500">Computer Science Student · AI Researcher · Builder</span>
+              </p>
+            </div>
+          </motion.div>
+
+          {/* ── Contact Me button ── */}
+          <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible"
+            className="flex justify-start pt-2">
+            <a
+              href="https://mail.google.com/mail/?view=cm&to=1amit23verma@gmail.com"
+              target="_blank"
+              rel="noreferrer"
+              className="group relative inline-flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-300"
+              style={{
+                background: 'linear-gradient(135deg, rgba(109,40,217,0.25) 0%, rgba(14,165,233,0.2) 100%)',
+                border: '1px solid rgba(99,102,241,0.4)',
+                boxShadow: '0 0 24px rgba(109,40,217,0.2)',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 36px rgba(109,40,217,0.45), 0 0 12px rgba(56,189,248,0.2)';
+                (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(129,140,248,0.7)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 24px rgba(109,40,217,0.2)';
+                (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(99,102,241,0.4)';
+              }}
+            >
+              {/* icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              Contact Me
+              {/* arrow */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-indigo-400 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </motion.div>
         </div>
 
         {/* ── Bottom section ── */}

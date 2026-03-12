@@ -245,7 +245,7 @@ export default function DashboardPage() {
                             Hi, I am a B.Tech final year student. I built this platform to keep track of my progress and visually log the concepts I've learned during these 4 years. If you find any inaccuracies in the mathematics or implementations I've posted, please do notify me! This is a constant work in progress.
                         </p>
                         <div className="flex justify-center mt-4">
-                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=1amit1verma@gmail.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 rounded-lg hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:text-indigo-300 transition-all font-mono text-sm font-semibold group">
+                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=1amit23verma@gmail.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 rounded-lg hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:text-indigo-300 transition-all font-mono text-sm font-semibold group">
                                 <Mail className="w-4 h-4 group-hover:scale-110 transition-transform" /> Contact Me
                             </a>
                         </div>
