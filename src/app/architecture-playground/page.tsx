@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Network, ArrowRight, Activity, HardDrive, Calculator, Settings, Info, Box, Layers, LineChart } from 'lucide-react';
+import { Network, ArrowRight, Activity, HardDrive, Calculator, Settings, Info, Box, Layers, LineChart, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
@@ -177,7 +177,7 @@ function MLPModule() {
             {/* Right Visualization & Stats */}
             <div className="lg:col-span-8 space-y-6 flex flex-col">
                 {/* Animated Network Canvas */}
-                <div className="glass-panel p-6 rounded-2xl flex-1 relative overflow-hidden flex items-center justify-center min-h-[350px]">
+                <div className="glass-panel p-2 rounded-2xl flex-1 relative min-h-[450px]">
                     <MLPCanvas inputs={inputs} hiddenSize={hiddenSize} hiddenLayers={hiddenLayers} outputs={outputs} />
                 </div>
 
@@ -220,7 +220,296 @@ function MLPModule() {
                     </div>
                 </div>
             </div>
+
+            {/* ── Full-width MLP Explainer ── */}
+            <div className="lg:col-span-12">
+                <MLPExplainer
+                    inputs={inputs} hiddenSize={hiddenSize} hiddenLayers={hiddenLayers}
+                    outputs={outputs} precision={precision}
+                    edgeParams={edgeParams} biasParams={biasParams} totalParams={totalParams}
+                    forwardFlops={forwardFlops} trainFlops={trainFlops} memoryBytes={memoryBytes}
+                />
+            </div>
         </>
+    );
+}
+
+// -------------------------------------------------------------
+// MLP EXPLAINER — educational breakdown below the visualization
+// -------------------------------------------------------------
+function MLPExplainer({ inputs, hiddenSize, hiddenLayers, outputs, precision, edgeParams, biasParams, totalParams, forwardFlops, trainFlops, memoryBytes }: {
+    inputs: number; hiddenSize: number; hiddenLayers: number; outputs: number;
+    precision: Precision; edgeParams: number; biasParams: number; totalParams: number;
+    forwardFlops: number; trainFlops: number; memoryBytes: number;
+}) {
+    const [openSection, setOpenSection] = React.useState<string | null>('structure');
+    const toggle = (id: string) => setOpenSection(v => v === id ? null : id);
+
+    const bytesPerParam: Record<Precision, number> = { FP32: 4, FP16: 2, BF16: 2, FP8: 1 };
+    const bpp = bytesPerParam[precision];
+
+    // Layer breakdown for display
+    const layerRows = [
+        { name: 'Input Layer',  neurons: inputs,    weights: 0,                   bias: 0,         note: 'Raw features — no params' },
+        ...Array.from({ length: hiddenLayers }, (_, i) => {
+            const prevSize = i === 0 ? inputs : hiddenSize;
+            return { name: `Hidden ${i + 1}`, neurons: hiddenSize, weights: prevSize * hiddenSize, bias: hiddenSize, note: `z = Σ(w·x) + b  →  a = σ(z)` };
+        }),
+        { name: 'Output Layer', neurons: outputs, weights: hiddenSize * outputs, bias: outputs, note: 'Softmax → class probabilities' },
+    ];
+
+    const sections = [
+        {
+            id: 'structure',
+            accent: 'bg-indigo-500',
+            title: 'Network Structure',
+            color: 'indigo',
+            content: (
+                <div className="space-y-4">
+                    <p className="text-slate-300 text-sm leading-relaxed">
+                        A <span className="text-indigo-300 font-semibold">Multi-Layer Perceptron</span> is a stack of fully-connected layers.
+                        Every neuron in one layer sends a signal to <em>every</em> neuron in the next — that is why it's called <em>fully connected</em>.
+                    </p>
+
+                    {/* Architecture summary banner */}
+                    <div className="flex items-center gap-2 flex-wrap font-mono text-sm">
+                        <span className="bg-blue-500/15 border border-blue-500/30 text-blue-300 px-3 py-1.5 rounded-lg">Input ({inputs})</span>
+                        {Array.from({ length: hiddenLayers }, (_, i) => (
+                            <React.Fragment key={i}>
+                                <span className="text-slate-600">→</span>
+                                <span className="bg-violet-500/15 border border-violet-500/30 text-violet-300 px-3 py-1.5 rounded-lg">Hidden {i+1} ({hiddenSize})</span>
+                            </React.Fragment>
+                        ))}
+                        <span className="text-slate-600">→</span>
+                        <span className="bg-green-500/15 border border-green-500/30 text-green-300 px-3 py-1.5 rounded-lg">Output ({outputs})</span>
+                    </div>
+
+                    {/* Layer-by-layer table */}
+                    <div className="overflow-x-auto rounded-xl border border-slate-700">
+                        <table className="w-full text-xs font-mono">
+                            <thead>
+                                <tr className="bg-slate-800/70 text-slate-400 uppercase tracking-wider text-[10px]">
+                                    <th className="text-left px-4 py-2">Layer</th>
+                                    <th className="text-right px-4 py-2">Neurons</th>
+                                    <th className="text-right px-4 py-2">Weights</th>
+                                    <th className="text-right px-4 py-2">Biases</th>
+                                    <th className="text-right px-4 py-2">Subtotal</th>
+                                    <th className="text-left px-4 py-2">Math</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {layerRows.map((row, i) => (
+                                    <tr key={i} className="border-t border-slate-700/60 hover:bg-slate-800/40 transition-colors">
+                                        <td className="px-4 py-2 text-slate-200 font-semibold">{row.name}</td>
+                                        <td className="px-4 py-2 text-right text-blue-300">{row.neurons}</td>
+                                        <td className="px-4 py-2 text-right text-amber-300">{row.weights.toLocaleString()}</td>
+                                        <td className="px-4 py-2 text-right text-green-300">{row.bias}</td>
+                                        <td className="px-4 py-2 text-right text-white font-bold">{(row.weights + row.bias).toLocaleString()}</td>
+                                        <td className="px-4 py-2 text-slate-400 text-[10px]">{row.note}</td>
+                                    </tr>
+                                ))}
+                                <tr className="border-t-2 border-slate-600 bg-slate-800/60 font-bold">
+                                    <td className="px-4 py-2 text-white" colSpan={4}>Grand Total</td>
+                                    <td className="px-4 py-2 text-right text-indigo-300 text-sm">{totalParams.toLocaleString()}</td>
+                                    <td className="px-4 py-2 text-slate-400 text-[10px]">{edgeParams.toLocaleString()} W + {biasParams} B</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'forwardpass',
+            accent: 'bg-amber-500',
+            title: 'Forward Pass — the Math',
+            color: 'amber',
+            content: (
+                <div className="space-y-4">
+                    <p className="text-slate-300 text-sm leading-relaxed">
+                        For <em>each</em> hidden and output neuron, two operations happen:
+                    </p>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        {/* Pre-activation */}
+                        <div className="bg-slate-800/60 border border-amber-500/20 rounded-xl p-4">
+                            <div className="text-amber-400 font-semibold text-sm mb-2">① Weighted Sum (Pre-activation)</div>
+                            <div className="font-mono text-sm bg-slate-900/60 rounded-lg p-3 text-center space-y-1">
+                                <div><span className="text-violet-300">z</span><span className="text-slate-400"> = </span><span className="text-slate-300">Σ</span><span className="text-slate-400">(</span><span className="text-amber-300">wᵢ</span><span className="text-slate-400"> · </span><span className="text-blue-300">xᵢ</span><span className="text-slate-400">)</span><span className="text-slate-400"> + </span><span className="text-green-300">b</span></div>
+                                <div className="text-[10px] text-slate-500">w = weights  ·  x = inputs  ·  b = bias</div>
+                            </div>
+                            <div className="text-slate-400 text-xs mt-2">The dot product of the weight vector and input vector, offset by a learnable bias.</div>
+                        </div>
+                        {/* Activation */}
+                        <div className="bg-slate-800/60 border border-violet-500/20 rounded-xl p-4">
+                            <div className="text-violet-400 font-semibold text-sm mb-2">② Non-linearity (Activation)</div>
+                            <div className="font-mono text-sm bg-slate-900/60 rounded-lg p-3 text-center space-y-1">
+                                <div><span className="text-green-300">a</span><span className="text-slate-400"> = </span><span className="text-violet-300">σ</span><span className="text-slate-400">(</span><span className="text-violet-300">z</span><span className="text-slate-400">)</span></div>
+                                <div className="text-[10px] text-slate-500">σ = ReLU / Sigmoid / Tanh / GELU …</div>
+                            </div>
+                            <div className="text-slate-400 text-xs mt-2">Without this, stacking layers is the same as one linear layer — no learning power gained.</div>
+                        </div>
+                    </div>
+                    {/* Full vector form */}
+                    <div className="bg-slate-800/60 border border-slate-600/40 rounded-xl p-4">
+                        <div className="text-slate-300 font-semibold text-sm mb-2">Full layer in matrix form</div>
+                        <div className="font-mono text-sm bg-slate-900/60 rounded-lg p-3 text-center">
+                            <span className="text-green-300">A</span><span className="text-slate-400"> = </span>
+                            <span className="text-violet-300">σ</span><span className="text-slate-400">(</span>
+                            <span className="text-amber-300">W</span><span className="text-slate-400"> · </span>
+                            <span className="text-blue-300">X</span>
+                            <span className="text-slate-400"> + </span>
+                            <span className="text-green-300">b</span><span className="text-slate-400">)</span>
+                        </div>
+                        <div className="flex gap-6 mt-3 text-xs font-mono flex-wrap">
+                            <div><span className="text-amber-300">W</span><span className="text-slate-500"> ({hiddenSize}×{inputs}) — weight matrix</span></div>
+                            <div><span className="text-blue-300">X</span><span className="text-slate-500"> ({inputs}×1) — input vector</span></div>
+                            <div><span className="text-green-300">b</span><span className="text-slate-500"> ({hiddenSize}×1) — bias vector</span></div>
+                            <div><span className="text-green-300">A</span><span className="text-slate-500"> ({hiddenSize}×1) — activations out</span></div>
+                        </div>
+                    </div>
+                    {/* FLOPs explanation */}
+                    <div className="bg-slate-800/60 border border-amber-500/20 rounded-xl p-4">
+                        <div className="text-amber-400 font-semibold text-sm mb-2">How FLOPs are counted</div>
+                        <div className="text-slate-400 text-xs space-y-1">
+                            <div>Each weight does: <span className="text-white font-mono">multiply + add</span> = <span className="text-amber-300">2 FLOPs</span></div>
+                            <div>Total MACs = <span className="text-white font-mono">{edgeParams.toLocaleString()}</span> → Forward pass = <span className="text-amber-300 font-bold font-mono">{forwardFlops.toLocaleString()} FLOPs</span></div>
+                            <div>Training step ≈ 3× forward (forward + backward + update) = <span className="text-amber-300 font-bold font-mono">{trainFlops.toLocaleString()} FLOPs</span></div>
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'params',
+            accent: 'bg-teal-500',
+            title: 'Parameter Counting',
+            color: 'teal',
+            content: (
+                <div className="space-y-4">
+                    <p className="text-slate-300 text-sm leading-relaxed">
+                        The number of parameters determines how many numbers the model must learn and store.
+                    </p>
+                    <div className="bg-slate-800/60 border border-teal-500/20 rounded-xl p-4 space-y-3 font-mono text-sm">
+                        <div className="text-teal-400 font-semibold">General formula</div>
+                        <div className="bg-slate-900/60 rounded-lg p-3 space-y-2 text-xs">
+                            <div><span className="text-amber-300">Weights</span><span className="text-slate-400"> = (in × h) + (h × h) × (L−1) + (h × out)</span></div>
+                            <div><span className="text-green-300">Biases</span><span className="text-slate-400">  = h × L + out</span></div>
+                            <div className="border-t border-slate-700 pt-2"><span className="text-white font-bold">Total</span><span className="text-slate-400"> = Weights + Biases</span></div>
+                        </div>
+                        <div className="bg-slate-900/60 rounded-lg p-3 space-y-1 text-xs">
+                            <div className="text-slate-400 mb-1">With your current values ({inputs} → {hiddenSize}×{hiddenLayers} → {outputs}):</div>
+                            <div><span className="text-amber-300">{edgeParams.toLocaleString()}</span><span className="text-slate-400"> weights + </span><span className="text-green-300">{biasParams}</span><span className="text-slate-400"> biases = </span><span className="text-white font-bold">{totalParams.toLocaleString()}</span><span className="text-slate-400"> total params</span></div>
+                        </div>
+                    </div>
+                    <div className="bg-slate-800/60 border border-slate-600/40 rounded-xl p-4">
+                        <div className="text-slate-300 font-semibold text-sm mb-3">Memory footprint at {precision}</div>
+                        <div className="flex items-center gap-4">
+                            <div className="text-center">
+                                <div className="text-2xl font-extrabold font-mono text-white">{totalParams.toLocaleString()}</div>
+                                <div className="text-xs text-slate-500">params</div>
+                            </div>
+                            <div className="text-slate-500 font-mono">×</div>
+                            <div className="text-center">
+                                <div className="text-2xl font-extrabold font-mono text-teal-300">{bpp}</div>
+                                <div className="text-xs text-slate-500">bytes ({precision})</div>
+                            </div>
+                            <div className="text-slate-500 font-mono">=</div>
+                            <div className="text-center">
+                                <div className="text-2xl font-extrabold font-mono text-white">{memoryBytes < 1024 ? `${memoryBytes} B` : `${(memoryBytes/1024).toFixed(2)} KB`}</div>
+                                <div className="text-xs text-slate-500">model size</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'scaling',
+            accent: 'bg-rose-500',
+            title: 'Why Parameters Explode',
+            color: 'rose',
+            content: (
+                <div className="space-y-4">
+                    <p className="text-slate-300 text-sm leading-relaxed">
+                        Parameters scale <span className="text-rose-300 font-semibold">multiplicatively</span> — adding one neuron to a layer adds a full column of weights.
+                    </p>
+                    <div className="bg-slate-800/60 border border-rose-500/20 rounded-xl p-4">
+                        <div className="text-rose-400 font-semibold text-sm mb-2">Key insight</div>
+                        <div className="font-mono text-sm bg-slate-900/60 rounded-lg p-3 text-center">
+                            <span className="text-slate-300">Params per connection ≈ </span>
+                            <span className="text-blue-300">neurons<sub>prev</sub></span>
+                            <span className="text-slate-500"> × </span>
+                            <span className="text-violet-300">neurons<sub>next</sub></span>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-xs font-mono">
+                        {[{label:'GPT-2 Small',p:'117 M'},{label:'GPT-3',p:'175 B'},{label:'GPT-4 (est.)',p:'~1.8 T'}].map(m => (
+                            <div key={m.label} className="bg-slate-800/60 border border-rose-500/10 rounded-xl p-3 text-center">
+                                <div className="text-rose-300 font-bold text-lg">{m.p}</div>
+                                <div className="text-slate-500 mt-1">{m.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                        Your model has <span className="text-white font-bold">{totalParams.toLocaleString()}</span> parameters.
+                        GPT-3 has <span className="text-rose-300">175,000,000,000</span> — that's
+                        {' '}<span className="text-white font-bold">{(175_000_000_000 / totalParams | 0).toLocaleString()}×</span> more.
+                        This is why scaling laws matter: each order of magnitude of parameters requires roughly an order of magnitude more compute to train.
+                    </p>
+                </div>
+            ),
+        },
+    ];
+
+    const colorMap: Record<string, string> = {
+        indigo: 'border-indigo-500 text-indigo-400',
+        amber:  'border-amber-500 text-amber-400',
+        teal:   'border-teal-500 text-teal-400',
+        rose:   'border-rose-500 text-rose-400',
+    };
+
+    return (
+        <div className="glass-panel rounded-2xl overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-slate-800/80 to-slate-900/80 border-b border-slate-700 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div>
+                    <h3 className="text-white font-bold text-base">MLP Deep Dive</h3>
+                    <p className="text-slate-400 text-xs">All the math behind your {inputs}→{hiddenSize}×{hiddenLayers}→{outputs} network — live</p>
+                </div>
+            </div>
+
+            {/* Accordion sections */}
+            <div className="divide-y divide-slate-700/50">
+                {sections.map(sec => {
+                    const isOpen = openSection === sec.id;
+                    const clr = colorMap[sec.color];
+                    return (
+                        <div key={sec.id}>
+                            <button
+                                onClick={() => toggle(sec.id)}
+                                className="w-full flex items-center gap-3 px-6 py-4 hover:bg-slate-800/40 transition-colors text-left"
+                            >
+                                <div className={`w-1 h-5 rounded-full flex-shrink-0 ${sec.accent}`} />
+                                <span className="font-semibold text-slate-200 flex-1">{sec.title}</span>
+                                <span className={`text-xs font-mono border px-2 py-0.5 rounded ${clr} opacity-70`}>{isOpen ? '▲ collapse' : '▼ expand'}</span>
+                            </button>
+                            {isOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="px-6 pb-6"
+                                >
+                                    {sec.content}
+                                </motion.div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
     );
 }
 
@@ -1146,92 +1435,436 @@ function DrawingPad({ size = 28, onDraw }: { size: number, onDraw: (data: Float3
 // -------------------------------------------------------------
 // VISUALIZATION LOGIC: MLP Canvas 
 // -------------------------------------------------------------
+
+// -------------------------------------------------------------
+// MATH PANEL: shown on neuron hover
+// -------------------------------------------------------------
+function MLPNeuronPanel({ info }: {
+    info: {
+        x: number; y: number;
+        layerType: 'input'|'hidden'|'output';
+        layerIdx: number; nodeIdx: number;
+        layerSize: number; fanIn: number; fanOut: number;
+        val: number; color: string;
+    }
+}) {
+    const { layerType, layerIdx, nodeIdx, layerSize, fanIn, fanOut, val, color } = info;
+
+    const weightParams  = fanIn;          // weights coming IN to this neuron
+    const biasParam     = 1;              // every non-input neuron has 1 bias
+    const outgoingConns = fanOut;         // connections going OUT
+
+    // Pick label
+    const label =
+        layerType === 'input'  ? 'Input Neuron'  :
+        layerType === 'output' ? 'Output Neuron' :
+        `Hidden Neuron (Layer ${layerIdx})`;
+
+    // Activation badge color
+    const headerBg  = layerType === 'input'  ? 'from-blue-600/30 to-blue-900/40 border-blue-500/30' :
+                      layerType === 'output' ? 'from-green-600/30 to-green-900/40 border-green-500/30' :
+                      'from-violet-600/30 to-violet-900/40 border-violet-500/30';
+
+    // Positioning: prefer above the node, flip below if near top
+    const panelW = 300;
+    const isNearTop = info.y < 160;
+    const topStyle = isNearTop
+        ? { left: info.x, top: info.y + 22, transform: 'translateX(-50%)' }
+        : { left: info.x, top: info.y - 12, transform: 'translate(-50%, -100%)' };
+
+    return (
+        <div
+            className="absolute pointer-events-none z-50 font-mono text-xs"
+            style={{ ...topStyle, width: panelW }}
+        >
+            {/* Arrow connector */}
+            {!isNearTop && (
+                <div className="flex justify-center mb-[-1px]">
+                    <div className="w-3 h-3 rotate-45 bg-slate-900 border-r border-b border-slate-600" />
+                </div>
+            )}
+
+            <div className={`bg-slate-900/98 border rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden border-slate-600`}>
+                {/* Header */}
+                <div className={`bg-gradient-to-r ${headerBg} border-b border-slate-700/60 px-4 py-2.5 flex items-center gap-2`}>
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
+                    <span className="font-bold text-white tracking-wide">{label}</span>
+                    <span className="ml-auto text-slate-400 text-[10px]">#{nodeIdx + 1} / {layerSize}</span>
+                </div>
+
+                <div className="px-4 py-3 space-y-3">
+                    {layerType === 'input' ? (
+                        <>
+                            {/* Input neuron explanation */}
+                            <div>
+                                <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Role</div>
+                                <div className="text-slate-300 leading-relaxed">Receives a raw feature value directly from the dataset — no computation applied.</div>
+                            </div>
+                            <div className="bg-slate-800/70 rounded-lg px-3 py-2 border border-slate-700/50 text-center">
+                                <span className="text-blue-300">x</span>
+                                <span className="text-slate-500 mx-2">=</span>
+                                <span className="text-amber-300 font-bold">{val.toFixed(4)}</span>
+                                <span className="text-slate-500 ml-2 text-[10px]">(raw input value)</span>
+                            </div>
+                            <div>
+                                <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Connections Out</div>
+                                <div className="text-slate-300">
+                                    <span className="text-violet-300 font-bold">{fanOut}</span>
+                                    <span className="text-slate-400"> weights → next layer</span>
+                                </div>
+                            </div>
+                        </>
+                    ) : layerType === 'hidden' ? (
+                        <>
+                            {/* Hidden neuron — full forward pass math */}
+                            <div>
+                                <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">Pre-activation (weighted sum)</div>
+                                <div className="bg-slate-800/70 rounded-lg px-3 py-2 border border-slate-700/50 space-y-1">
+                                    <div>
+                                        <span className="text-violet-300">z</span>
+                                        <span className="text-slate-500 mx-1.5">=</span>
+                                        <span className="text-slate-300">Σ</span>
+                                        <span className="text-slate-400">(</span>
+                                        <span className="text-amber-300">wᵢ</span>
+                                        <span className="text-slate-500"> · </span>
+                                        <span className="text-blue-300">xᵢ</span>
+                                        <span className="text-slate-400">)</span>
+                                        <span className="text-slate-500 mx-1.5">+</span>
+                                        <span className="text-green-300">b</span>
+                                    </div>
+                                    <div className="text-slate-500 text-[10px]">
+                                        Sum over {fanIn} incoming weights + bias
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">Activation (non-linearity)</div>
+                                <div className="bg-slate-800/70 rounded-lg px-3 py-2 border border-slate-700/50 space-y-1">
+                                    <div>
+                                        <span className="text-green-300">a</span>
+                                        <span className="text-slate-500 mx-1.5">=</span>
+                                        <span className="text-violet-300">σ</span>
+                                        <span className="text-slate-400">(</span>
+                                        <span className="text-violet-300">z</span>
+                                        <span className="text-slate-400">)</span>
+                                        <span className="text-slate-500 mx-1.5">≈</span>
+                                        <span className="text-amber-300 font-bold">{val.toFixed(4)}</span>
+                                    </div>
+                                    <div className="text-slate-500 text-[10px]">σ = activation fn (ReLU, Sigmoid, Tanh…)</div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <div className="flex-1 bg-slate-800/50 rounded-lg px-3 py-2 border border-slate-700/40 text-center">
+                                    <div className="text-slate-500 text-[10px] mb-0.5">Weights in</div>
+                                    <div className="text-amber-300 font-bold text-sm">{fanIn}</div>
+                                </div>
+                                <div className="flex-1 bg-slate-800/50 rounded-lg px-3 py-2 border border-slate-700/40 text-center">
+                                    <div className="text-slate-500 text-[10px] mb-0.5">Bias</div>
+                                    <div className="text-green-300 font-bold text-sm">1</div>
+                                </div>
+                                <div className="flex-1 bg-slate-800/50 rounded-lg px-3 py-2 border border-slate-700/40 text-center">
+                                    <div className="text-slate-500 text-[10px] mb-0.5">Weights out</div>
+                                    <div className="text-violet-300 font-bold text-sm">{fanOut}</div>
+                                </div>
+                            </div>
+                            <div className="text-slate-500 text-[10px] text-center">
+                                Total params at this neuron: <span className="text-white">{fanIn + biasParam}</span>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Output neuron */}
+                            <div>
+                                <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Pre-activation</div>
+                                <div className="bg-slate-800/70 rounded-lg px-3 py-2 border border-slate-700/50">
+                                    <span className="text-violet-300">z</span>
+                                    <span className="text-slate-500 mx-1.5">=</span>
+                                    <span className="text-slate-300">Σ</span>
+                                    <span className="text-slate-400">(</span>
+                                    <span className="text-amber-300">wᵢ</span>
+                                    <span className="text-slate-500"> · </span>
+                                    <span className="text-blue-300">xᵢ</span>
+                                    <span className="text-slate-400">)</span>
+                                    <span className="text-slate-500 mx-1.5">+</span>
+                                    <span className="text-green-300">b</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Softmax (classification)</div>
+                                <div className="bg-slate-800/70 rounded-lg px-3 py-2 border border-slate-700/50 space-y-1">
+                                    <div>
+                                        <span className="text-green-300">P(class {nodeIdx + 1})</span>
+                                        <span className="text-slate-500 mx-1.5">=</span>
+                                        <span className="text-slate-300">e</span>
+                                        <sup className="text-violet-300">zₖ</sup>
+                                        <span className="text-slate-500"> / </span>
+                                        <span className="text-slate-300">Σ e</span>
+                                        <sup className="text-violet-300">zⱼ</sup>
+                                        <span className="text-slate-500 mx-1.5">≈</span>
+                                        <span className="text-amber-300 font-bold">{val.toFixed(3)}</span>
+                                    </div>
+                                    <div className="text-slate-500 text-[10px]">Probability for class {nodeIdx + 1} of {layerSize}</div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <div className="flex-1 bg-slate-800/50 rounded-lg px-3 py-2 border border-slate-700/40 text-center">
+                                    <div className="text-slate-500 text-[10px] mb-0.5">Weights in</div>
+                                    <div className="text-amber-300 font-bold text-sm">{fanIn}</div>
+                                </div>
+                                <div className="flex-1 bg-slate-800/50 rounded-lg px-3 py-2 border border-slate-700/40 text-center">
+                                    <div className="text-slate-500 text-[10px] mb-0.5">Total params</div>
+                                    <div className="text-green-300 font-bold text-sm">{fanIn + 1}</div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Bottom arrow for flip-below */}
+                {isNearTop && (
+                    <div className="flex justify-center mt-[-1px]">
+                        <div className="w-3 h-3 rotate-45 bg-slate-900 border-l border-t border-slate-600 mb-[-6px]" />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// All props stored in a ref so the animation loop never restarts on slider change
 function MLPCanvas({ inputs, hiddenSize, hiddenLayers, outputs }: { inputs: number, hiddenSize: number, hiddenLayers: number, outputs: number }) {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const [hoverInfo, setHoverInfo] = React.useState<{
+        x: number; y: number;
+        layerType: 'input'|'hidden'|'output';
+        layerIdx: number; nodeIdx: number;
+        layerSize: number; fanIn: number; fanOut: number;
+        val: number; color: string;
+    } | null>(null);
 
+    // ── Props ref: lets the render loop always have fresh values without being a dep
+    const propsRef = React.useRef({ inputs, hiddenSize, hiddenLayers, outputs });
+    React.useLayoutEffect(() => { propsRef.current = { inputs, hiddenSize, hiddenLayers, outputs }; });
+
+    const stateRef = React.useRef({
+        nodes: [] as any[],
+        edges: [] as any[],
+        phase: 'idle' as 'idle' | 'forward',
+        forwardProgress: 0,
+        lastTime: performance.now(),
+        mouseX: -1000, mouseY: -1000,
+        canvasWidth: 0, canvasHeight: 0,
+        lastHoverId: null as string | null,
+    });
+
+    const MAX_NODES = 8;
+
+    // ── Layout builder: called on props change AND on resize
+    const buildLayout = React.useCallback(() => {
+        const s = stateRef.current;
+        const { inputs, hiddenSize, hiddenLayers, outputs } = propsRef.current;
+        const { canvasWidth: w, canvasHeight: h } = s;
+        if (!w || !h) return;
+
+        const layerDefs = [
+            { id: 'in', size: inputs, displaySize: Math.min(inputs, MAX_NODES), color: '#4f9eff' },
+            ...Array.from({ length: hiddenLayers }, (_, i) => ({ id: `h${i}`, size: hiddenSize, displaySize: Math.min(hiddenSize, MAX_NODES), color: '#a371f7' })),
+            { id: 'out', size: outputs, displaySize: Math.min(outputs, MAX_NODES), color: '#3fb950' },
+        ];
+
+        const padX = 70, padY = 55;
+        const layerSpacing = (w - padX * 2) / Math.max(layerDefs.length - 1, 1);
+
+        const oldNodes = s.nodes;
+        const newNodes: any[] = [];
+        const newEdges: any[] = [];
+
+        layerDefs.forEach((layer, lIdx) => {
+            const x = padX + lIdx * layerSpacing;
+            const ns = Math.min(50, (h - padY * 2) / Math.max(layer.displaySize, 1));
+            const startY = h / 2 - ((layer.displaySize - 1) * ns) / 2;
+
+            for (let i = 0; i < layer.displaySize; i++) {
+                const y = startY + i * ns;
+                const isEllipsis = layer.size > MAX_NODES && i === MAX_NODES - 1;
+                const old = oldNodes.find(n => n.id === `${layer.id}-${i}`);
+                newNodes.push({
+                    id: `${layer.id}-${i}`, layerIdx: lIdx, isEllipsis,
+                    size: layer.size, color: layer.color,
+                    targetX: x, targetY: y,
+                    x: old?.x ?? x, y: old?.y ?? y,
+                    r: old?.r ?? (isEllipsis ? 0 : 3), targetR: isEllipsis ? 2 : 10,
+                    opacity: old?.opacity ?? 0, targetOpacity: 1,
+                    val: Math.random(),
+                });
+            }
+        });
+
+        for (let l = 0; l < layerDefs.length - 1; l++) {
+            const src = newNodes.filter(n => n.layerIdx === l && !n.isEllipsis);
+            const tgt = newNodes.filter(n => n.layerIdx === l + 1 && !n.isEllipsis);
+            src.forEach(s2 => tgt.forEach(t => {
+                newEdges.push({ id: `${s2.id}->${t.id}`, source: s2, target: t, layerIdx: l,
+                    w: (Math.random() * 2 - 1), opacity: 0, targetOpacity: 0.15 });
+            }));
+        }
+
+        s.nodes = newNodes;
+        s.edges = newEdges;
+    }, []); // eslint-disable-line
+
+    // ── Trigger rebuild when props change
+    React.useEffect(() => { buildLayout(); }, [inputs, hiddenSize, hiddenLayers, outputs, buildLayout]);
+
+    // ── Single persistent animation loop — never recreated on prop changes
     React.useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        const ctx = canvas.getContext('2d')!;
+        const s = stateRef.current;
+        let raf: number;
 
-        // We will draw: Input layer -> Hidden Layers -> Output layer
-        // Nodes are circles, lines represent weights.
-
-        const width = canvas.width;
-        const height = canvas.height;
-        ctx.clearRect(0, 0, width, height);
-
-        const layers = [
-            { size: inputs, color: '#3b82f6', label: 'Input' }, // blue
-            ...Array(hiddenLayers).fill({ size: hiddenSize, color: '#6366f1', label: 'Hidden' }), // indigo
-            { size: outputs, color: '#10b981', label: 'Output' } // emerald
-        ];
-
-        const layerSpacing = width / (layers.length + 1);
-
-        // Calculate Node coordinates
-        const nodes: { x: number, y: number, layerIdx: number }[] = [];
-        const maxNodesPerLayer = Math.max(inputs, hiddenSize, outputs);
-
-        // Draw lines first (so they are under the nodes)
-        ctx.lineWidth = 1;
-        for (let l = 0; l < layers.length - 1; l++) {
-            const currentLayerSize = layers[l].size;
-            const nextLayerSize = layers[l + 1].size;
-
-            const currentX = (l + 1) * layerSpacing;
-            const nextX = (l + 2) * layerSpacing;
-
-            // To center the nodes vertically
-            const currentStartY = (height / 2) - ((currentLayerSize - 1) * 30 / 2);
-            const nextStartY = (height / 2) - ((nextLayerSize - 1) * 30 / 2);
-
-            for (let i = 0; i < currentLayerSize; i++) {
-                const y1 = currentStartY + (i * 30);
-                nodes.push({ x: currentX, y: y1, layerIdx: l });
-
-                for (let j = 0; j < nextLayerSize; j++) {
-                    const y2 = nextStartY + (j * 30);
-
-                    // Subtle line
-                    ctx.beginPath();
-                    ctx.strokeStyle = `rgba(99, 102, 241, ${0.4 / Math.sqrt(currentLayerSize * nextLayerSize)})`; // Fade out dense connections
-                    ctx.moveTo(currentX, y1);
-                    ctx.lineTo(nextX, y2);
-                    ctx.stroke();
-                }
-            }
-        }
-
-        // Capture the final output nodes coordinates since they aren't pushed in the start-node loop
-        const lastL = layers.length - 1;
-        const lastX = (lastL + 1) * layerSpacing;
-        const lastStartY = (height / 2) - ((layers[lastL].size - 1) * 30 / 2);
-        for (let j = 0; j < layers[lastL].size; j++) {
-            nodes.push({ x: lastX, y: lastStartY + (j * 30), layerIdx: lastL });
-        }
-
-        // Draw Nodes
-        nodes.forEach(node => {
-            ctx.beginPath();
-            ctx.fillStyle = layers[node.layerIdx].color;
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.5;
-            ctx.arc(node.x, node.y, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            // Add subtle glow
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = layers[node.layerIdx].color;
-            ctx.fill();
-            ctx.shadowBlur = 0; // reset
+        const ro = new ResizeObserver(entries => {
+            const { width, height } = entries[0].contentRect;
+            if (!width || !height) return;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset + apply DPR once
+            s.canvasWidth = width; s.canvasHeight = height;
+            buildLayout();
         });
+        ro.observe(canvas.parentElement!);
 
-    }, [inputs, hiddenSize, hiddenLayers, outputs]);
+        const render = (time: number) => {
+            const dt = Math.min((time - s.lastTime) / 1000, 0.1);
+            s.lastTime = time;
+            const { hiddenLayers } = propsRef.current;
+            const w = s.canvasWidth, h = s.canvasHeight;
 
-    return <canvas ref={canvasRef} width={800} height={400} className="w-full h-full max-w-full rounded-lg" />;
+            ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = 'rgba(255,255,255,0.025)';
+            for (let i = 0; i < w; i += 20) for (let j = 0; j < h; j += 20) ctx.fillRect(i, j, 1, 1);
+
+            // Lerp nodes
+            s.nodes.forEach(n => {
+                n.x += (n.targetX - n.x) * 10 * dt;
+                n.y += (n.targetY - n.y) * 10 * dt;
+                n.r += (n.targetR - n.r) * 10 * dt;
+                n.opacity += (n.targetOpacity - n.opacity) * 6 * dt;
+            });
+
+            // Forward pass auto-loop
+            s.forwardProgress += dt * 1.5;
+            if (s.forwardProgress > hiddenLayers + 2) s.forwardProgress = 0;
+
+            let hovNode: any = null;
+            s.nodes.forEach(n => {
+                const dx = n.x - s.mouseX, dy = n.y - s.mouseY;
+                if (Math.sqrt(dx*dx+dy*dy) < n.r + 6) hovNode = n;
+            });
+
+            // Draw edges
+            s.edges.forEach(e => {
+                const active = s.forwardProgress > e.layerIdx && s.forwardProgress < e.layerIdx + 1.5;
+                const hov = hovNode && (e.source === hovNode || e.target === hovNode);
+                e.targetOpacity = hov ? 0.85 : active ? 0.65 : 0.12;
+                e.opacity += (e.targetOpacity - e.opacity) * 10 * dt;
+                const op = Math.max(0, Math.min(1, e.opacity));
+                const hex = Math.floor(op * 255).toString(16).padStart(2,'0');
+                const grad = ctx.createLinearGradient(e.source.x, e.source.y, e.target.x, e.target.y);
+                grad.addColorStop(0, `${e.source.color}${hex}`);
+                grad.addColorStop(1, `${e.target.color}${hex}`);
+                ctx.beginPath(); ctx.strokeStyle = grad; ctx.lineWidth = hov ? 2 : 0.8;
+                ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke();
+
+                if (active) {
+                    const lp = s.forwardProgress - e.layerIdx;
+                    if (lp >= 0 && lp <= 1) {
+                        ctx.beginPath(); ctx.fillStyle = '#fff';
+                        ctx.shadowBlur = 10; ctx.shadowColor = '#fff';
+                        ctx.arc(e.source.x+(e.target.x-e.source.x)*lp, e.source.y+(e.target.y-e.source.y)*lp, 2.5, 0, Math.PI*2);
+                        ctx.fill(); ctx.shadowBlur = 0;
+                    }
+                }
+            });
+
+            // Draw nodes
+            s.nodes.forEach(n => {
+                ctx.globalAlpha = Math.max(0, Math.min(1, n.opacity));
+                const pulse = 1 + Math.sin(time/500 + n.x*0.01 + n.y*0.01) * 0.05;
+                const active = s.forwardProgress > n.layerIdx + 0.8 && s.forwardProgress < n.layerIdx + 1.8;
+                const sp = hovNode===n ? 1.3 : active ? 1.2 : pulse;
+                const r = Math.max(0.1, n.r * sp);
+
+                if (n.isEllipsis) {
+                    ctx.fillStyle = '#64748b';
+                    [-6,0,6].forEach(dy => { ctx.beginPath(); ctx.arc(n.x, n.y+dy, 2, 0, Math.PI*2); ctx.fill(); });
+                    ctx.font='9px monospace'; ctx.textAlign='center'; ctx.fillStyle='#94a3b8'; ctx.textBaseline='top';
+                    ctx.fillText(`+${n.size-MAX_NODES+1}`, n.x, n.y+10);
+                } else {
+                    const gr = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r);
+                    gr.addColorStop(0, active?'#fff':`${n.color}ee`); gr.addColorStop(1,`${n.color}22`);
+                    ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2);
+                    ctx.fillStyle=gr; ctx.strokeStyle=active?'#fff':n.color; ctx.lineWidth=1.5;
+                    ctx.fill(); ctx.stroke();
+                    if (active||hovNode===n) { ctx.shadowBlur=16; ctx.shadowColor=n.color; ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; }
+                }
+                ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
+
+                // Column label below bottom node
+                const colNodes = s.nodes.filter(nn => nn.layerIdx===n.layerIdx);
+                if (Math.abs(n.targetY - Math.max(...colNodes.map(nn=>nn.targetY))) < 0.5) {
+                    const { hiddenLayers:hl } = propsRef.current;
+                    const labels=['Input',...Array(hl).fill('Hidden'),'Output'];
+                    const lbl=(labels[n.layerIdx]??'Hidden')==='Hidden'?`Hidden ${n.layerIdx}`:labels[n.layerIdx]??'';
+                    ctx.globalAlpha=Math.max(0,Math.min(1,n.opacity));
+                    ctx.fillStyle='#94a3b8'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.textBaseline='top';
+                    ctx.fillText(lbl, n.x, n.y+n.r+8);
+                    ctx.fillStyle='#64748b'; ctx.fillText(`(${n.size})`, n.x, n.y+n.r+22);
+                    ctx.textBaseline='alphabetic'; ctx.globalAlpha=1;
+                }
+            });
+
+            // Hover tooltip
+            const hid = hovNode?.id ?? null;
+            if (hid !== s.lastHoverId) {
+                s.lastHoverId = hid;
+                if (hovNode && !hovNode.isEllipsis) {
+                    const { inputs:pIn, hiddenSize:pHS, hiddenLayers:pHL, outputs:pOut } = propsRef.current;
+                    const isInput  = hovNode.layerIdx === 0;
+                    const isOutput = hovNode.layerIdx === pHL + 1;
+                    const layerType: 'input'|'hidden'|'output' = isInput ? 'input' : isOutput ? 'output' : 'hidden';
+                    const fanIn  = isInput  ? 0   : (hovNode.layerIdx===1 ? pIn : pHS);
+                    const fanOut = isOutput ? 0   : (hovNode.layerIdx===pHL ? pOut : pHS);
+                    const nodeIdx = parseInt(hovNode.id.split('-').pop()??'0');
+                    setHoverInfo({
+                        x: hovNode.x, y: hovNode.y,
+                        layerType, layerIdx: hovNode.layerIdx, nodeIdx,
+                        layerSize: hovNode.size, fanIn, fanOut,
+                        val: hovNode.val, color: hovNode.color,
+                    });
+                } else { setHoverInfo(null); }
+            }
+
+            raf = requestAnimationFrame(render);
+        };
+
+        const onMove = (e: MouseEvent) => { const r=canvas.getBoundingClientRect(); s.mouseX=e.clientX-r.left; s.mouseY=e.clientY-r.top; };
+        const onLeave = () => { s.mouseX=-1000; s.mouseY=-1000; };
+        canvas.addEventListener('mousemove', onMove);
+        canvas.addEventListener('mouseleave', onLeave);
+        raf = requestAnimationFrame(render);
+
+        return () => { cancelAnimationFrame(raf); ro.disconnect(); canvas.removeEventListener('mousemove',onMove); canvas.removeEventListener('mouseleave',onLeave); };
+    }, []); // ← empty deps: runs once, reads props via ref
+
+    return (
+        <div className="relative w-full h-full min-h-[420px]">
+            <canvas ref={canvasRef} style={{width:'100%',height:'100%'}} className="bg-[#0d1117] rounded-xl block" />
+            {hoverInfo && <MLPNeuronPanel info={hoverInfo} />}
+        </div>
+    );
 }
 
 // -------------------------------------------------------------
