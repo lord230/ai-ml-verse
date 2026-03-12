@@ -514,6 +514,312 @@ function MLPExplainer({ inputs, hiddenSize, hiddenLayers, outputs, precision, ed
 }
 
 // -------------------------------------------------------------
+// -------------------------------------------------------------
+// CNN LAYER HOVER PANEL
+// -------------------------------------------------------------
+const CNN_LAYERS = [
+    {
+        id: 'conv1',
+        label: 'Conv1',
+        color: 'blue',
+        accent: 'border-blue-500 text-blue-300',
+        header: 'bg-blue-500/10 border-blue-500/20',
+        code: 'nn.Conv2d(1, 32, kernel_size=3, stride=1)',
+        role: 'First feature extractor — detects edges, textures and strokes.',
+        inputShape:  '1 × 28 × 28',
+        outputShape: '32 × 26 × 26',
+        formula: 'out(n,c,h,w) = bias_c + Σ_k Σ_i Σ_j weight(c,k,i,j) · in(n,k,h+i,w+j)',
+        shapeNote: 'Output = (28 − 3 + 1) = 26',
+        params: 320,
+        flops: 432640,
+        animType: 'conv' as const,
+        detail: '32 kernels each of size 3×3×1. Each kernel slides across the image doing an element-wise multiply and sum at every position.',
+    },
+    {
+        id: 'conv2',
+        label: 'Conv2',
+        color: 'purple',
+        accent: 'border-purple-500 text-purple-300',
+        header: 'bg-purple-500/10 border-purple-500/20',
+        code: 'nn.Conv2d(32, 64, kernel_size=3, stride=1)',
+        role: 'Deep feature extractor — combines low-level features into shapes.',
+        inputShape:  '32 × 26 × 26',
+        outputShape: '64 × 24 × 24',
+        formula: 'Each output pixel = Σ over 32 in-channels × 3×3 kernel + bias',
+        shapeNote: 'Output = (26 − 3 + 1) = 24',
+        params: 18496,
+        flops: 21307392,
+        animType: 'conv' as const,
+        detail: '64 kernels each 3×3×32. Learns complex patterns like loops and intersections from Conv1\'s edge maps.',
+    },
+    {
+        id: 'pool',
+        label: 'MaxPool',
+        color: 'pink',
+        accent: 'border-pink-500 text-pink-300',
+        header: 'bg-pink-500/10 border-pink-500/20',
+        code: 'F.max_pool2d(x, 2)',
+        role: 'Spatial compression — keeps strongest signal, reduces memory.',
+        inputShape:  '64 × 24 × 24',
+        outputShape: '64 × 12 × 12',
+        formula: 'Pool(x) = max(x₀₀, x₀₁, x₁₀, x₁₁)   per 2×2 window',
+        shapeNote: 'Each 2×2 block → 1 pixel  →  24÷2 = 12',
+        params: 0,
+        flops: 0,
+        animType: 'pool' as const,
+        detail: 'No learnable parameters. Sliding 2×2 window keeps the max value. Provides translation invariance — digit doesn\'t need to be perfectly centered.',
+    },
+    {
+        id: 'flatten',
+        label: 'Flatten',
+        color: 'emerald',
+        accent: 'border-emerald-500 text-emerald-300',
+        header: 'bg-emerald-500/10 border-emerald-500/20',
+        code: 'torch.flatten(x, 1)',
+        role: 'Bridge from spatial to sequential — collapses 3D tensor to 1D.',
+        inputShape:  '64 × 12 × 12',
+        outputShape: '9216',
+        formula: '9,216 = 64 channels × 12 × 12 spatial',
+        shapeNote: '64 × 12 × 12 = 9,216 features',
+        params: 0,
+        flops: 0,
+        animType: 'flatten' as const,
+        detail: 'Concatenates all 64 feature maps row by row into a single vector. The subsequent fully connected layers then learn global relationships between all 9,216 positions.',
+    },
+    {
+        id: 'fc1',
+        label: 'FC1',
+        color: 'amber',
+        accent: 'border-amber-500 text-amber-300',
+        header: 'bg-amber-500/10 border-amber-500/20',
+        code: 'nn.Linear(9216, 128)  + F.relu',
+        role: 'Global pattern combiner — compresses 9,216 → 128 key signals.',
+        inputShape:  '9216',
+        outputShape: '128',
+        formula: 'y = x · Wᵀ + b   →   a = max(0, y)',
+        shapeNote: 'Weight matrix is 128 × 9216',
+        params: 1179776,
+        flops: 2359552,
+        animType: 'fc' as const,
+        detail: 'Fully connected: every input feature connects to every output neuron. ReLU follows: a = max(0, z). Dropout(0.5) applied during training to regularize.',
+    },
+    {
+        id: 'fc2',
+        label: 'FC2',
+        color: 'red',
+        accent: 'border-red-500 text-red-300',
+        header: 'bg-red-500/10 border-red-500/20',
+        code: 'nn.Linear(128, 10)  →  log_softmax',
+        role: 'Decision head — outputs log-probability for each digit class.',
+        inputShape:  '128',
+        outputShape: '10',
+        formula: 'logit_k = Σᵢ Wₖᵢ xᵢ + bₖ\nP(k) = exp(logit_k) / Σⱼ exp(logit_j)',
+        shapeNote: '10 outputs = 10 digit classes (0–9)',
+        params: 1290,
+        flops: 2580,
+        animType: 'fc' as const,
+        detail: 'F.log_softmax converts raw logits to log-probabilities. The class with the highest value is the predicted digit. NLL loss is used during training.',
+    },
+] as const;
+
+type CNNLayerId = typeof CNN_LAYERS[number]['id'];
+
+function ConvAnimation({ isConv2 }: { isConv2?: boolean }) {
+    const [pos, setPos] = React.useState({ x: 0, y: 0 });
+    const gridSize = 7;
+    React.useEffect(() => {
+        let i = 0;
+        const id = setInterval(() => {
+            const max = gridSize - 3;
+            setPos({ x: (i % (max + 1)), y: Math.floor(i / (max + 1)) % (max + 1) });
+            i++;
+        }, 180);
+        return () => clearInterval(id);
+    }, []);
+    return (
+        <svg viewBox="0 0 140 100" className="w-full h-24">
+            {/* Input grid */}
+            {Array.from({ length: gridSize * gridSize }, (_, k) => {
+                const gx = k % gridSize, gy = Math.floor(k / gridSize);
+                const inKernel = gx >= pos.x && gx < pos.x + 3 && gy >= pos.y && gy < pos.y + 3;
+                return <rect key={k} x={2 + gx * 9} y={2 + gy * 9} width={8} height={8}
+                    rx={1} fill={inKernel ? (isConv2 ? '#a855f7' : '#3b82f6') : '#1e293b'} stroke="#334155" strokeWidth={0.5} />;
+            })}
+            {/* Kernel overlay */}
+            <rect x={2 + pos.x * 9} y={2 + pos.y * 9} width={26} height={26}
+                rx={2} fill="none" stroke={isConv2 ? '#c084fc' : '#60a5fa'} strokeWidth={1.5} strokeDasharray="3 1" />
+            {/* Arrow */}
+            <text x="68" y="52" fill="#475569" fontSize="12" textAnchor="middle">→</text>
+            {/* Output dot */}
+            <circle cx={80 + pos.x * 6} cy={10 + pos.y * 6} r={4}
+                fill={isConv2 ? '#a855f7' : '#3b82f6'} opacity={0.9} />
+            {/* Output grid outline */}
+            {Array.from({ length: 5 * 5 }, (_, k) => {
+                const gx = k % 5, gy = Math.floor(k / 5);
+                return <rect key={k} x={75 + gx * 6} y={5 + gy * 6} width={5} height={5}
+                    rx={0.5} fill="none" stroke="#334155" strokeWidth={0.4} />;
+            })}
+            <text x="70" y="88" fill="#64748b" fontSize="7" textAnchor="start">kernel slides → feature map</text>
+        </svg>
+    );
+}
+
+function PoolAnimation() {
+    const [active, setActive] = React.useState(0);
+    React.useEffect(() => {
+        const id = setInterval(() => setActive(p => (p + 1) % 9), 350);
+        return () => clearInterval(id);
+    }, []);
+    const ax = active % 3, ay = Math.floor(active / 3);
+    return (
+        <svg viewBox="0 0 140 90" className="w-full h-24">
+            {/* 6x6 input grid in 3 2x2 blocks per row */}
+            {Array.from({ length: 36 }, (_, k) => {
+                const gx = k % 6, gy = Math.floor(k / 6);
+                const bx = Math.floor(gx / 2), by = Math.floor(gy / 2);
+                const isActive = bx === ax && by === ay;
+                const isMax = gx === ax * 2 + 1 && gy === ay * 2; // arbitrary max position
+                return (
+                    <rect key={k} x={2 + gx * 10} y={2 + gy * 10} width={9} height={9}
+                        rx={1} fill={isMax && isActive ? '#ec4899' : isActive ? '#831843' : '#1e293b'}
+                        stroke={isActive ? '#f472b6' : '#334155'} strokeWidth={0.5} />
+                );
+            })}
+            <text x="68" y="35" fill="#475569" fontSize="12" textAnchor="middle">→</text>
+            {/* 3x3 output */}
+            {Array.from({ length: 9 }, (_, k) => {
+                const gx = k % 3, gy = Math.floor(k / 3);
+                return <rect key={k} x={78 + gx * 12} y={8 + gy * 12} width={10} height={10}
+                    rx={1} fill={k === active ? '#ec4899' : '#1e293b'} stroke={k === active ? '#f472b6' : '#334155'} strokeWidth={0.5} />;
+            })}
+            <text x="2" y="86" fill="#64748b" fontSize="7">2×2 window → max value</text>
+        </svg>
+    );
+}
+
+function FlattenAnimation() {
+    const [step, setStep] = React.useState(0);
+    React.useEffect(() => {
+        const id = setInterval(() => setStep(p => (p + 1) % 16), 120);
+        return () => clearInterval(id);
+    }, []);
+    return (
+        <svg viewBox="0 0 140 90" className="w-full h-24">
+            {/* 4x4 grid */}
+            {Array.from({ length: 16 }, (_, k) => {
+                const gx = k % 4, gy = Math.floor(k / 4);
+                return <rect key={k} x={2 + gx * 14} y={5 + gy * 14} width={12} height={12}
+                    rx={1} fill={k <= step ? '#10b981' : '#1e293b'} stroke={k === step ? '#34d399' : '#334155'} strokeWidth={k === step ? 1 : 0.5} />;
+            })}
+            <text x="62" y="42" fill="#475569" fontSize="11" textAnchor="middle">→</text>
+            {/* Flat bar */}
+            {Array.from({ length: 16 }, (_, k) => (
+                <rect key={k} x={70 + k * 4} y={35} width={3} height={14}
+                    rx={0.5} fill={k <= step ? '#10b981' : '#1e293b'} stroke="#334155" strokeWidth={0.3} />
+            ))}
+            <text x="2" y="84" fill="#64748b" fontSize="7">3D tensor unrolled to 1D vector</text>
+        </svg>
+    );
+}
+
+function FCAnimation() {
+    const [active, setActive] = React.useState(0);
+    const inN = 8, outN = 4;
+    React.useEffect(() => {
+        const id = setInterval(() => setActive(p => (p + 1) % outN), 400);
+        return () => clearInterval(id);
+    }, []);
+    return (
+        <svg viewBox="0 0 140 90" className="w-full h-24">
+            {/* Input nodes */}
+            {Array.from({ length: inN }, (_, i) => (
+                <circle key={i} cx={15} cy={8 + i * 10} r={4}
+                    fill="#1e293b" stroke="#f59e0b" strokeWidth={0.8} />
+            ))}
+            {/* Output nodes */}
+            {Array.from({ length: outN }, (_, i) => (
+                <circle key={i} cx={125} cy={18 + i * 16} r={5}
+                    fill={i === active ? '#f59e0b' : '#1e293b'}
+                    stroke={i === active ? '#fcd34d' : '#78350f'} strokeWidth={1} />
+            ))}
+            {/* Connections for active output */}
+            {Array.from({ length: inN }, (_, i) => (
+                <line key={i}
+                    x1={19} y1={8 + i * 10}
+                    x2={120} y2={18 + active * 16}
+                    stroke="#f59e0b" strokeWidth={0.5} opacity={0.4} />
+            ))}
+            <text x="70" y="86" fill="#64748b" fontSize="7" textAnchor="middle">every input → every output neuron</text>
+        </svg>
+    );
+}
+
+function CNNLayerHoverPanel({ layer }: { layer: typeof CNN_LAYERS[number] }) {
+    return (
+        <div className="absolute left-full top-0 ml-3 z-50 w-80 pointer-events-none">
+            {/* Arrow pointing left */}
+            <div className="flex items-start">
+                <div className="mt-5 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-slate-800 flex-shrink-0" />
+                <div className={`flex-1 bg-slate-900/98 border rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden border-slate-700`}>
+                    {/* Header */}
+                    <div className={`${layer.header} border-b border-slate-700/60 px-4 py-2.5 flex items-center gap-2`}>
+                        <div className={`w-2 h-2 rounded-full bg-current flex-shrink-0 ${layer.accent.split(' ')[1]}`} />
+                        <span className={`font-bold text-sm ${layer.accent.split(' ')[1]}`}>{layer.label}</span>
+                        <span className="ml-auto text-slate-500 text-[10px] font-mono">{layer.params > 0 ? `${layer.params.toLocaleString()} params` : 'no params'}</span>
+                    </div>
+
+                    {/* Animation */}
+                    <div className="px-3 pt-3">
+                        {layer.animType === 'conv'    && <ConvAnimation isConv2={layer.id === 'conv2'} />}
+                        {layer.animType === 'pool'    && <PoolAnimation />}
+                        {layer.animType === 'flatten' && <FlattenAnimation />}
+                        {layer.animType === 'fc'      && <FCAnimation />}
+                    </div>
+
+                    <div className="px-4 pb-4 space-y-3">
+                        {/* Role */}
+                        <p className="text-slate-300 text-[11px] leading-relaxed">{layer.role}</p>
+
+                        {/* Shape transform */}
+                        <div className="flex items-center gap-2 font-mono text-[10px]">
+                            <span className="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-slate-300">{layer.inputShape}</span>
+                            <span className="text-slate-500">→</span>
+                            <span className={`bg-slate-800 border px-2 py-0.5 rounded ${layer.accent}`}>{layer.outputShape}</span>
+                        </div>
+
+                        {/* Formula */}
+                        <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg px-3 py-2">
+                            <div className="text-slate-500 text-[9px] uppercase tracking-wider mb-1">Formula</div>
+                            <pre className={`text-[10px] font-mono whitespace-pre-wrap ${layer.accent.split(' ')[1]}`}>{layer.formula}</pre>
+                        </div>
+
+                        {/* Shape note */}
+                        <div className="text-slate-500 text-[10px] font-mono">{layer.shapeNote}</div>
+
+                        {/* Stats row */}
+                        {layer.flops > 0 && (
+                            <div className="flex gap-2">
+                                <div className="flex-1 bg-slate-800/50 border border-slate-700/40 rounded-lg px-2 py-1.5 text-center">
+                                    <div className="text-slate-500 text-[9px]">FLOPs</div>
+                                    <div className="text-white font-bold font-mono text-[11px]">{layer.flops.toLocaleString()}</div>
+                                </div>
+                                <div className="flex-1 bg-slate-800/50 border border-slate-700/40 rounded-lg px-2 py-1.5 text-center">
+                                    <div className="text-slate-500 text-[9px]">Params</div>
+                                    <div className="text-white font-bold font-mono text-[11px]">{layer.params.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Detail */}
+                        <p className="text-slate-500 text-[10px] leading-relaxed border-t border-slate-700/40 pt-2">{layer.detail}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// -------------------------------------------------------------
 // CNN MODULE (PyTorch MNIST Architecture)
 // -------------------------------------------------------------
 function CNNModule() {
@@ -525,6 +831,20 @@ function CNNModule() {
     const [animationProgress, setAnimationProgress] = useState(0); // 0 to 100
     const [isPlaying, setIsPlaying] = useState(false);
     const [speed, setSpeed] = useState(1); // 0.1x to 10x
+    const [hoveredLayer, setHoveredLayer] = useState<CNNLayerId | null>(null);
+    const [hoveredCNNName, setHoveredCNNName] = useState<string | null>(null);
+
+    // Map 3D layer name → CNN_LAYERS entry
+    const LAYER_NAME_MAP: Record<string, CNNLayerId> = {
+        'Input 28\u00d728': 'conv1',  // input has no explainer, map to conv1 as fallback
+        'Conv1 (3\u00d73, 32)': 'conv1',
+        'Conv2 (3\u00d73, 64)': 'conv2',
+        'MaxPool 2\u00d72': 'pool',
+        'Flatten (9216)': 'flatten',
+        'FC1 (128)': 'fc1',
+        'Output (0\u20139)': 'fc2',
+    };
+    const hoveredCNNLayer = hoveredCNNName ? CNN_LAYERS.find(l => l.id === LAYER_NAME_MAP[hoveredCNNName]) ?? null : null;
 
     // Global Hotkeys for Fullscreen Control
     useEffect(() => {
@@ -624,14 +944,41 @@ function CNNModule() {
                         <Play className="w-5 h-5 mr-2 fill-current" /> Auto Predict
                     </button>
 
-                    <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-700 text-xs text-slate-400 space-y-1 flex-1">
-                        <p className="text-slate-200 font-semibold mb-1">PyTorch MNISTModel</p>
-                        <p><span className="text-blue-400">Conv1</span> — 32 filters (3×3), ReLU</p>
-                        <p><span className="text-purple-400">Conv2</span> — 64 filters (3×3), ReLU</p>
-                        <p><span className="text-pink-400">MaxPool</span> — 2×2</p>
-                        <p><span className="text-emerald-400">Flatten</span> — 9,216</p>
-                        <p><span className="text-amber-400">FC1</span> — 128, ReLU</p>
-                        <p><span className="text-red-400">FC2</span> — 10 (Output)</p>
+                    {/* Interactive architecture layer list */}
+                    <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-700 flex-1 relative">
+                        <p className="text-slate-200 font-semibold mb-2 text-xs">PyTorch MNISTModel</p>
+                        <p className="text-slate-500 text-[10px] mb-2 font-mono">Hover a layer for details</p>
+                        <div className="space-y-1 relative">
+                            {CNN_LAYERS.map(layer => {
+                                const isHov = hoveredLayer === layer.id;
+                                const colorDot: Record<string, string> = {
+                                    blue:'bg-blue-400', purple:'bg-purple-400', pink:'bg-pink-400',
+                                    emerald:'bg-emerald-400', amber:'bg-amber-400', red:'bg-red-400',
+                                };
+                                const colorText: Record<string, string> = {
+                                    blue:'text-blue-400', purple:'text-purple-400', pink:'text-pink-400',
+                                    emerald:'text-emerald-400', amber:'text-amber-400', red:'text-red-400',
+                                };
+                                return (
+                                    <div
+                                        key={layer.id}
+                                        className={`relative flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-default transition-all ${
+                                            isHov ? 'bg-slate-800 ring-1 ring-slate-600' : 'hover:bg-slate-800/50'
+                                        }`}
+                                        onMouseEnter={() => setHoveredLayer(layer.id)}
+                                        onMouseLeave={() => setHoveredLayer(null)}
+                                    >
+                                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colorDot[layer.color]}`} />
+                                        <span className={`text-xs font-mono font-semibold ${colorText[layer.color]}`}>{layer.label}</span>
+                                        <span className="text-slate-500 text-[10px]">{layer.code.split('(')[0].split('.').pop()}</span>
+                                        {layer.params > 0 && (
+                                            <span className="ml-auto text-slate-600 text-[9px] font-mono">{layer.params.toLocaleString()}p</span>
+                                        )}
+                                        {isHov && <CNNLayerHoverPanel layer={layer} />}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -681,8 +1028,49 @@ function CNNModule() {
                     </div>
                     
                     <div className={`flex-1 min-h-0 relative ${isFullscreen ? 'rounded-xl overflow-hidden border border-slate-800' : ''}`}>
-                        {/* We use strict absolute positioning inside this block to ensure the canvas doesn't shift weirdly. The library will auto-fit. */}
-                        <PyTorchCNNCanvas drawingData={drawingData} onPrediction={setPrediction} animationProgress={animationProgress} isPlaying={isPlaying} speed={speed} />
+                        <PyTorchCNNCanvas
+                            drawingData={drawingData}
+                            onPrediction={setPrediction}
+                            onLayerHover={setHoveredCNNName}
+                            animationProgress={animationProgress}
+                            isPlaying={isPlaying}
+                            speed={speed}
+                        />
+                        {/* 3D Hover Panel — bottom-left of canvas */}
+                        {hoveredCNNLayer && (
+                            <div className="absolute bottom-4 left-4 z-20 w-80">
+                                <div className="flex-1 bg-slate-900/98 border border-slate-700 rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden">
+                                    {/* Header */}
+                                    <div className={`${hoveredCNNLayer.header} border-b border-slate-700/60 px-4 py-2.5 flex items-center gap-2`}>
+                                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${hoveredCNNLayer.accent.split(' ')[1].replace('text-','bg-')}`} />
+                                        <span className={`font-bold text-sm ${hoveredCNNLayer.accent.split(' ')[1]}`}>{hoveredCNNName}</span>
+                                        <span className="ml-auto text-slate-500 text-[10px] font-mono">
+                                            {hoveredCNNLayer.params > 0 ? `${hoveredCNNLayer.params.toLocaleString()} params` : 'no params'}
+                                        </span>
+                                    </div>
+                                    {/* Animation */}
+                                    <div className="px-3 pt-3">
+                                        {hoveredCNNLayer.animType === 'conv'    && <ConvAnimation isConv2={hoveredCNNLayer.id === 'conv2'} />}
+                                        {hoveredCNNLayer.animType === 'pool'    && <PoolAnimation />}
+                                        {hoveredCNNLayer.animType === 'flatten' && <FlattenAnimation />}
+                                        {hoveredCNNLayer.animType === 'fc'      && <FCAnimation />}
+                                    </div>
+                                    <div className="px-4 pb-4 space-y-2">
+                                        <p className="text-slate-300 text-[11px] leading-relaxed">{hoveredCNNLayer.role}</p>
+                                        <div className="flex items-center gap-2 font-mono text-[10px]">
+                                            <span className="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-slate-300">{hoveredCNNLayer.inputShape}</span>
+                                            <span className="text-slate-500">→</span>
+                                            <span className={`bg-slate-800 border px-2 py-0.5 rounded ${hoveredCNNLayer.accent}`}>{hoveredCNNLayer.outputShape}</span>
+                                        </div>
+                                        <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg px-3 py-2">
+                                            <div className="text-slate-500 text-[9px] uppercase tracking-wider mb-1">Formula</div>
+                                            <pre className={`text-[10px] font-mono whitespace-pre-wrap ${hoveredCNNLayer.accent.split(' ')[1]}`}>{hoveredCNNLayer.formula}</pre>
+                                        </div>
+                                        <p className="text-slate-500 text-[10px] leading-relaxed">{hoveredCNNLayer.detail}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Animation Controls Bottom Bar */}

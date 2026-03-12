@@ -24,9 +24,10 @@ const LAYER_COLORS = [
 interface Props {
     drawingData?: Float32Array;
     onPrediction?: (pred: number | null) => void;
+    onLayerHover?: (layerId: string | null) => void;
     animationProgress: number;
     isPlaying: boolean;
-    speed?: number; // Added speed prop
+    speed?: number;
 }
 
 interface LayerDef {
@@ -439,8 +440,12 @@ function Scene({ props }: { props: Props }) {
                 const vc = visualCount(l);
                 return (
                     <group key={i}>
-                        {/* Glass slab */}
-                        <mesh position={[0, 0, l.zPos]}>
+                        {/* Glass slab — hoverable */}
+                        <mesh
+                            position={[0, 0, l.zPos]}
+                            onPointerOver={(e) => { e.stopPropagation(); props.onLayerHover?.(l.name); }}
+                            onPointerOut={() => props.onLayerHover?.(null)}
+                        >
                             <boxGeometry args={[l.width + 1, (l.type === 'fc' ? 3 : l.width) + 1, 0.15]} />
                             <meshPhysicalMaterial
                                 color={LAYER_COLORS[i % LAYER_COLORS.length]}
