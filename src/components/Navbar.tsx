@@ -64,9 +64,9 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex items-center space-x-4">
-                    <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">
+                    <Link href="/about" className="text-slate-400 hover:text-cyan-400 transition-colors" title="About">
                         <Info className="w-5 h-5" />
-                    </a>
+                    </Link>
 
                     <div className="h-4 w-px bg-slate-700 hidden sm:block"></div>
 
