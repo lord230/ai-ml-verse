@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/providers/AuthProvider";
 import "./globals.css";
@@ -67,6 +68,7 @@ export default function RootLayout({
             {children}
           </main>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
