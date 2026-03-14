@@ -10,11 +10,24 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI ML Verse",
+  title: {
+    default: "AI ML Verse",
+    template: "%s | AI ML Verse",
+  },
   description: "See how neural networks actually learn. Interactive visualizations of backpropagation, transformers, normalization, CNNs, and deep learning architectures — built for serious AI minds.",
   metadataBase: new URL("https://www.aimlverse.in"),
   alternates: {
-    canonical: "/",
+    canonical: "https://www.aimlverse.in",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
   },
   openGraph: {
     title: "AI ML Verse",
@@ -22,15 +35,23 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://www.aimlverse.in",
     siteName: "AI ML Verse",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "AI ML Verse — Interactive AI/ML Visualizations",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "AI ML Verse",
     description: "See how neural networks actually learn. Interactive visualizations of backpropagation, transformers, normalization, CNNs, and deep learning architectures — built for serious AI minds.",
     creator: "@aimlverse",
+    images: ["/og-image.png"],
   },
 };
-
 
 export default function RootLayout({
   children,
